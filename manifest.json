@@ -1,0 +1,22 @@
+{
+  "name": "GMAT Quant \u2014 Neon Console Guide",
+  "short_name": "GMAT Quant",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#050612",
+  "theme_color": "#0b1130",
+  "description": "Offline-first GMAT Quant study guide with cheats, patterns, flashcards, quiz, and editable content.",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

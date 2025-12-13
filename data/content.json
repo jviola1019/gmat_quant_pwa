@@ -1,0 +1,245 @@
+{
+  "meta": {
+    "title": "GMAT Quant \u2014 Neon Console Guide",
+    "version": "1.0.0",
+    "description": "Offline-first PWA study guide: cheatsheet, patterns, flashcards, quiz mode."
+  },
+  "sections": [
+    {
+      "id": "cheatsheet",
+      "title": "Cheatsheet",
+      "subtitle": "1-page rules you can actually reuse",
+      "items": [
+        {
+          "id": "kdigit-pairing",
+          "type": "rule",
+          "tag": "digits",
+          "title": "k-digit / powers",
+          "body": "Rewrite into 2s and 5s, pair to make 10s, then count digits from the 10-power.",
+          "example": "4^9 \u00b7 5^17 \u2192 2^18\u00b75^17 = 2\u00b7(2^17\u00b75^17) \u2192 2\u00b710^17 \u21d2 18 digits"
+        },
+        {
+          "id": "range-overlap",
+          "type": "rule",
+          "tag": "range",
+          "title": "Range (smallest possible overall)",
+          "body": "Make ranges overlap as much as possible: smallest combined range can equal the largest individual range.",
+          "example": "If June range is 20 and July is 25, you can nest June inside July \u21d2 overall range = 25."
+        },
+        {
+          "id": "baseline-deviation",
+          "type": "rule",
+          "tag": "linear",
+          "title": "Linear word problems",
+          "body": "Use baseline \u00b1 (rate \u00d7 deviation). Words like \u201cover 40\u201d mean (S\u221240), not S.",
+          "example": "mpg = 24 \u2212 L/500 \u2212 (S\u221240)/20"
+        },
+        {
+          "id": "constant-rate",
+          "type": "rule",
+          "tag": "decay",
+          "title": "Constant-rate burn/drain",
+          "body": "Remaining fraction = 1 \u2212 elapsed/total. If both start equal height, H cancels \u2014 it\u2019s pure fractions.",
+          "example": "A = H(1\u2212m/t), B = H(1\u2212m/2t). Set B = 2A \u21d2 m = 2t/3."
+        },
+        {
+          "id": "cost-per-unit",
+          "type": "rule",
+          "tag": "ratio",
+          "title": "Cost per unit",
+          "body": "Set simple numbers, compute cost/benefit per unit, then convert to \u201cpercent less.\u201d Avoid algebra unless forced.",
+          "example": "If A costs 1.5\u00d7 but lasts 2.5\u00d7, then cost/km scales by 1.5/2.5 = 0.6 \u21d2 40% less."
+        },
+        {
+          "id": "tiny-percent",
+          "type": "rule",
+          "tag": "sci",
+          "title": "Scientific notation + percents",
+          "body": "Percent means \u00f7100. Example: 0.0003% = 3\u00d710\u207b\u2076. Also: 10\u207b\u00b9 = 0.1.",
+          "example": "Total = part / fraction. If 77 is 3\u00d710\u207b\u2076 of total \u21d2 total = 77/(3\u00d710\u207b\u2076) = (77\u00d710^6)/3."
+        },
+        {
+          "id": "conjugate",
+          "type": "rule",
+          "tag": "radicals",
+          "title": "Radicals & rationalizing",
+          "body": "Multiply by conjugate to remove radicals in denominators. Expand squares to simplify first.",
+          "example": "(\u221a3\u2212\u221a2)^2 = 5 \u2212 2\u221a6 \u21d2 1/(\u221a3\u2212\u221a2)^2 = 1/(5\u22122\u221a6) = 5 + 2\u221a6."
+        }
+      ]
+    },
+    {
+      "id": "patterns",
+      "title": "Patterns",
+      "subtitle": "What these question types are testing",
+      "items": [
+        {
+          "id": "p-kdigit",
+          "type": "pattern",
+          "tag": "digits",
+          "title": "k-digit via pairing 2s & 5s",
+          "body": "Rewrite 4^n as 2^(2n). Pair 2^k\u00b75^k = 10^k. Try to land on (small number)\u00b710^k, then digits = k+1."
+        },
+        {
+          "id": "p-range",
+          "type": "pattern",
+          "tag": "range",
+          "title": "Smallest combined range = overlap trick",
+          "body": "Nest the smaller interval inside the larger interval. The total range can be as small as the larger range."
+        },
+        {
+          "id": "p-mpg",
+          "type": "pattern",
+          "tag": "linear",
+          "title": "Baseline \u00b1 rate\u00d7deviation (mpg)",
+          "body": "Start at baseline. Apply each penalty using the correct deviation. \u201cOver 40\u201d forces (S\u221240)."
+        },
+        {
+          "id": "p-candles",
+          "type": "pattern",
+          "tag": "decay",
+          "title": "Candles: constant-rate burn",
+          "body": "Write remaining height as a fraction of original: A = H(1\u2212m/t), B = H(1\u2212m/2t). Cancel H and solve."
+        },
+        {
+          "id": "p-tinypercent",
+          "type": "pattern",
+          "tag": "sci",
+          "title": "Tiny percent = extra \u00f7100",
+          "body": "Convert percent to decimal first. 0.0003% = 0.000003 = 3\u00d710\u207b\u2076 (not 3\u00d710\u207b\u2074)."
+        },
+        {
+          "id": "p-couldbe",
+          "type": "pattern",
+          "tag": "ineq",
+          "title": "\u201cCould be > 1\u201d with an upper bound",
+          "body": "Use the maximum allowed x to see if the expression can exceed 1. Watch for cancellations like (1/x)\u00b7x."
+        },
+        {
+          "id": "p-range2",
+          "type": "pattern",
+          "tag": "build",
+          "title": "Range + total = construction",
+          "body": "Range 2 means only three consecutive values {n, n+1, n+2} are possible. Build one valid distribution that hits the total."
+        }
+      ]
+    },
+    {
+      "id": "flashcards",
+      "title": "Flashcards",
+      "subtitle": "Tap to reveal (spaced repetition friendly)",
+      "items": [
+        {
+          "id": "fc-kdigit",
+          "type": "flashcard",
+          "tag": "digits",
+          "q": "If you see powers of 4 with powers of 5, what\u2019s the move?",
+          "a": "Rewrite 4^n \u2192 2^(2n). Pair 2^k\u00b75^k = 10^k. Then count digits from the 10-exponent."
+        },
+        {
+          "id": "fc-range",
+          "type": "flashcard",
+          "tag": "range",
+          "q": "Smallest possible overall range when combining two groups?",
+          "a": "Maximize overlap; the smallest combined range can equal the largest individual range."
+        },
+        {
+          "id": "fc-over40",
+          "type": "flashcard",
+          "tag": "linear",
+          "q": "What does \u201cper 10 mph over 40\u201d mean algebraically?",
+          "a": "Use the deviation (S\u221240). Then apply the rate: 0.5 per 10 \u2192 (S\u221240)/20."
+        },
+        {
+          "id": "fc-tiny",
+          "type": "flashcard",
+          "tag": "sci",
+          "q": "Convert 0.0003% to scientific notation.",
+          "a": "0.0003% = 0.000003 = 3\u00d710\u207b\u2076 (percent adds an extra \u00f7100)."
+        },
+        {
+          "id": "fc-conjugate",
+          "type": "flashcard",
+          "tag": "radicals",
+          "q": "How do you remove radicals from a denominator like (\u221aa\u2212\u221ab)?",
+          "a": "Multiply by the conjugate (\u221aa+\u221ab). Expand squares first if that simplifies."
+        },
+        {
+          "id": "fc-denom-square",
+          "type": "flashcard",
+          "tag": "percent",
+          "q": "If y increases 10% and you have y\u00b2 in the denominator, what happens?",
+          "a": "The denominator multiplies by (1.1)\u00b2 = 1.21, so the whole expression is divided by 1.21."
+        }
+      ]
+    }
+  ],
+  "quiz": [
+    {
+      "p": "You see 4^9 \u00b7 5^17. What\u2019s the fastest plan?",
+      "opts": [
+        "Convert everything to decimals",
+        "Rewrite 4^9 as 2^18 and pair 2s with 5s into 10s",
+        "Take logs immediately",
+        "Multiply out 4^9 first"
+      ],
+      "correct": 1,
+      "why": "4^9=2^18. Pair 2^17\u00b75^17=10^17 leaving 2\u00b710^17 \u2192 digits."
+    },
+    {
+      "p": "Two month ranges are 20 and 25. Smallest possible combined range?",
+      "opts": [
+        "5",
+        "20",
+        "25",
+        "45"
+      ],
+      "correct": 2,
+      "why": "Fully overlap intervals; smallest overall range equals the largest individual range (25)."
+    },
+    {
+      "p": "\u201cPenalty of 0.5 mpg per 10 mph over 40.\u201d Speed is S\u226540. Penalty term?",
+      "opts": [
+        "S/20",
+        "(S\u221240)/20",
+        "(S\u221240)/10",
+        "0.5S"
+      ],
+      "correct": 1,
+      "why": "0.5 per 10 mph \u21d2 divide by 20, and \u201cover 40\u201d \u21d2 (S\u221240)."
+    },
+    {
+      "p": "Convert 0.0003% into a decimal (or scientific notation).",
+      "opts": [
+        "3\u00d710^-4",
+        "3\u00d710^-6",
+        "3\u00d710^-3",
+        "3\u00d710^-8"
+      ],
+      "correct": 1,
+      "why": "Percent means \u00f7100: 0.0003% = 0.000003 = 3\u00d710^-6."
+    },
+    {
+      "p": "If y increases 10% and you have y^2 in the denominator, overall factor is\u2026",
+      "opts": [
+        "\u00d71.1",
+        "\u00f71.1",
+        "\u00f7(1.1)^2 = \u00f71.21",
+        "\u00d7(1.1)^2 = \u00d71.21"
+      ],
+      "correct": 2,
+      "why": "Denominator scales by (1.1)^2, so expression divides by 1.21."
+    },
+    {
+      "p": "To simplify 1/(\u221a3\u2212\u221a2), the move is\u2026",
+      "opts": [
+        "Square numerator and denominator",
+        "Multiply by conjugate \u221a3+\u221a2",
+        "Approximate roots",
+        "Factor out \u221a2"
+      ],
+      "correct": 1,
+      "why": "Conjugate removes radicals in denominator."
+    }
+  ]
+}
