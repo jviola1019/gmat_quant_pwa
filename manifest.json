@@ -1,12 +1,12 @@
 {
-  "name": "GMAT Quant \u2014 Neon Console Guide",
-  "short_name": "GMAT Quant",
+  "name": "GMAT Study PWA",
+  "short_name": "GMAT Study",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#050612",
-  "theme_color": "#0b1130",
-  "description": "Offline-first GMAT Quant study guide with cheats, patterns, flashcards, quiz, and editable content.",
+  "background_color": "#f0f4f8",
+  "theme_color": "#012D5A",
+  "description": "Modern offline‑first GMAT study app with notes, quizzes, cheatsheet, patterns, flashcards and multi‑section support.",
   "icons": [
     {
       "src": "icons/icon-192.png",

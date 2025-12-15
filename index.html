@@ -3,23 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b1130" />
+  <!-- Updated theme colors for a lighter, more corporate look -->
+  <meta name="theme-color" content="#f4f6fb" />
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon-192.png" sizes="192x192">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="styles.css" />
-  <title>GMAT Quant — Neon Console Guide (PWA)</title>
+  <title>GMAT Study PWA</title>
 </head>
 <body>
   <div class="app" id="app">
     <header class="top">
       <div class="brand">
-        <div class="kicker">GMAT QUANT • OFFLINE PWA</div>
-        <h1 class="title">Neon Console Guide</h1>
+        <div class="kicker">GMAT • OFFLINE PWA</div>
+        <h1 class="title">Study Guide</h1>
         <p class="subtitle">
-          Built like a dev tool: fast search, command palette, offline-first, and easy-to-edit content.
+          A lightweight offline-first study guide with a cleaner, more polished look.
           <span class="pill" id="offlinePill" aria-live="polite">online</span>
         </p>
       </div>
@@ -31,12 +32,16 @@
       </div>
     </header>
 
+    <!-- Primary navigation. Additional GMAT sections are provided for future expansion. -->
     <nav class="nav">
       <button class="navItem" data-view="cheatsheet" aria-current="page"><span class="ico">▣</span><span>Cheatsheet</span></button>
       <button class="navItem" data-view="patterns"><span class="ico">≋</span><span>Patterns</span></button>
       <button class="navItem" data-view="flashcards"><span class="ico">⟐</span><span>Flashcards</span></button>
       <button class="navItem" data-view="quiz"><span class="ico">▶</span><span>Quiz</span></button>
       <button class="navItem" data-view="notes"><span class="ico">✎</span><span>Notes</span></button>
+      <!-- placeholders for other GMAT sections; currently empty but selectable -->
+      <button class="navItem" data-view="verbal"><span class="ico">V</span><span>Verbal</span></button>
+      <button class="navItem" data-view="integrated"><span class="ico">I</span><span>Integrated</span></button>
     </nav>
 
     <main class="main">
@@ -44,7 +49,7 @@
         <div class="toolbar">
           <div class="search">
             <span class="mag">⌕</span>
-            <input id="searchInput" type="search" inputmode="search" placeholder="Search (ex: baseline, 0.0003%, conjugate, range=2)…" />
+            <input id="searchInput" type="search" inputmode="search" placeholder="Search…" />
             <button class="mini" id="clearSearch" aria-label="Clear search" title="Clear">×</button>
           </div>
 
@@ -59,7 +64,7 @@
         <div class="contentHead">
           <div>
             <div class="h2" id="viewTitle">Cheatsheet</div>
-            <div class="h3" id="viewSubtitle">1-page rules you can actually reuse</div>
+            <div class="h3" id="viewSubtitle">1‑page rules you can actually reuse</div>
           </div>
 
           <div class="stats">
@@ -93,7 +98,7 @@
                 <button class="mini" id="tPause">Pause</button>
                 <button class="mini" id="tReset">Reset</button>
               </div>
-              <div class="muted">Pro tip: do 5 minutes focused, then 30 seconds “explain out loud.”</div>
+              <div class="muted">Pro tip: do 5 minutes focused, then 30 seconds to review your reasoning.</div>
             </div>
           </div>
         </section>
@@ -109,12 +114,13 @@
     </main>
 
     <footer class="foot">
-      <span>Offline-first caching via Service Worker.</span>
+      <span>Offline‑first caching via Service Worker.</span>
       <span class="sep">·</span>
       <span>Keyboard: <b>/</b> search, <b>Ctrl/⌘K</b> palette, <b>N</b> add.</span>
     </footer>
   </div>
 
+  <!-- Command palette modal -->
   <div class="modal" id="cmdModal" aria-hidden="true">
     <div class="modalCard" role="dialog" aria-modal="true" aria-label="Command palette">
       <div class="modalTop">
@@ -129,6 +135,7 @@
     </div>
   </div>
 
+  <!-- Add/Edit item modal -->
   <div class="modal" id="editModal" aria-hidden="true">
     <div class="modalCard" role="dialog" aria-modal="true" aria-label="Add or edit item">
       <div class="modalTop">
@@ -172,6 +179,7 @@
     </div>
   </div>
 
+  <!-- Link to our script -->
   <script src="app.js" defer></script>
 </body>
 </html>

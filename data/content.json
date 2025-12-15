@@ -1,70 +1,70 @@
 {
   "meta": {
-    "title": "GMAT Quant \u2014 Neon Console Guide",
-    "version": "1.0.0",
-    "description": "Offline-first PWA study guide: cheatsheet, patterns, flashcards, quiz mode."
+    "title": "GMAT Study PWA",
+    "version": "2.0.0",
+    "description": "Offline‑first study guide with cheatsheet, patterns, flashcards, quiz mode and notes."
   },
   "sections": [
     {
       "id": "cheatsheet",
       "title": "Cheatsheet",
-      "subtitle": "1-page rules you can actually reuse",
+      "subtitle": "1‑page rules you can actually reuse",
       "items": [
         {
           "id": "kdigit-pairing",
           "type": "rule",
           "tag": "digits",
-          "title": "k-digit / powers",
-          "body": "Rewrite into 2s and 5s, pair to make 10s, then count digits from the 10-power.",
-          "example": "4^9 \u00b7 5^17 \u2192 2^18\u00b75^17 = 2\u00b7(2^17\u00b75^17) \u2192 2\u00b710^17 \u21d2 18 digits"
+          "title": "k‑digit / powers",
+          "body": "Rewrite into 2s and 5s, pair to make 10s, then count digits from the 10‑power.",
+          "example": "4^9 · 5^17 → 2^18·5^17 = 2·(2^17·5^17) → 2·10^17 ⇒ 18 digits"
         },
         {
           "id": "range-overlap",
           "type": "rule",
           "tag": "range",
           "title": "Range (smallest possible overall)",
-          "body": "Make ranges overlap as much as possible: smallest combined range can equal the largest individual range.",
-          "example": "If June range is 20 and July is 25, you can nest June inside July \u21d2 overall range = 25."
+          "body": "Make ranges overlap as much as possible: the smallest combined range can equal the largest individual range.",
+          "example": "If one group’s range is 20 and the other’s is 25, you can nest the smaller within the larger ⇒ overall range = 25."
         },
         {
           "id": "baseline-deviation",
           "type": "rule",
           "tag": "linear",
           "title": "Linear word problems",
-          "body": "Use baseline \u00b1 (rate \u00d7 deviation). Words like \u201cover 40\u201d mean (S\u221240), not S.",
-          "example": "mpg = 24 \u2212 L/500 \u2212 (S\u221240)/20"
+          "body": "Use baseline ± (rate × deviation). Words like ‘over 40’ mean (S−40), not S.",
+          "example": "mpg = 24 − L/500 − (S−40)/20"
         },
         {
           "id": "constant-rate",
           "type": "rule",
           "tag": "decay",
-          "title": "Constant-rate burn/drain",
-          "body": "Remaining fraction = 1 \u2212 elapsed/total. If both start equal height, H cancels \u2014 it\u2019s pure fractions.",
-          "example": "A = H(1\u2212m/t), B = H(1\u2212m/2t). Set B = 2A \u21d2 m = 2t/3."
+          "title": "Constant‑rate burn/drain",
+          "body": "Remaining fraction = 1 − elapsed/total. If both start equal height, H cancels — it’s pure fractions.",
+          "example": "A = H(1−m/t), B = H(1−m/2t). Set B = 2A ⇒ m = 2t/3."
         },
         {
           "id": "cost-per-unit",
           "type": "rule",
           "tag": "ratio",
           "title": "Cost per unit",
-          "body": "Set simple numbers, compute cost/benefit per unit, then convert to \u201cpercent less.\u201d Avoid algebra unless forced.",
-          "example": "If A costs 1.5\u00d7 but lasts 2.5\u00d7, then cost/km scales by 1.5/2.5 = 0.6 \u21d2 40% less."
+          "body": "Set simple numbers, compute cost/benefit per unit, then convert to ‘percent less.’ Avoid algebra unless forced.",
+          "example": "If A costs 1.5× but lasts 2.5×, then cost/km scales by 1.5/2.5 = 0.6 ⇒ 40% less."
         },
         {
           "id": "tiny-percent",
           "type": "rule",
           "tag": "sci",
           "title": "Scientific notation + percents",
-          "body": "Percent means \u00f7100. Example: 0.0003% = 3\u00d710\u207b\u2076. Also: 10\u207b\u00b9 = 0.1.",
-          "example": "Total = part / fraction. If 77 is 3\u00d710\u207b\u2076 of total \u21d2 total = 77/(3\u00d710\u207b\u2076) = (77\u00d710^6)/3."
+          "body": "Percent means ÷100. Example: 0.0003% = 3×10⁻⁶. Also: 10⁻¹ = 0.1.",
+          "example": "Total = part / fraction. If 77 is 3×10⁻⁶ of total ⇒ total = 77/(3×10⁻⁶) = (77×10⁶)/3."
         },
         {
           "id": "conjugate",
           "type": "rule",
           "tag": "radicals",
-          "title": "Radicals & rationalizing",
-          "body": "Multiply by conjugate to remove radicals in denominators. Expand squares to simplify first.",
-          "example": "(\u221a3\u2212\u221a2)^2 = 5 \u2212 2\u221a6 \u21d2 1/(\u221a3\u2212\u221a2)^2 = 1/(5\u22122\u221a6) = 5 + 2\u221a6."
+          "title": "Radicals & rationalising",
+          "body": "Multiply by the conjugate to remove radicals in denominators. Expand squares to simplify first.",
+          "example": "(√3−√2)² = 5 − 2√6 ⇒ 1/(√3−√2)² = 1/(5−2√6) = 5 + 2√6."
         }
       ]
     },
@@ -77,8 +77,8 @@
           "id": "p-kdigit",
           "type": "pattern",
           "tag": "digits",
-          "title": "k-digit via pairing 2s & 5s",
-          "body": "Rewrite 4^n as 2^(2n). Pair 2^k\u00b75^k = 10^k. Try to land on (small number)\u00b710^k, then digits = k+1."
+          "title": "k‑digit via pairing 2s & 5s",
+          "body": "Rewrite 4^n as 2^(2n). Pair 2^k·5^k = 10^k. Try to land on (small number)·10^k, then digits = k+1."
         },
         {
           "id": "p-range",
@@ -91,29 +91,29 @@
           "id": "p-mpg",
           "type": "pattern",
           "tag": "linear",
-          "title": "Baseline \u00b1 rate\u00d7deviation (mpg)",
-          "body": "Start at baseline. Apply each penalty using the correct deviation. \u201cOver 40\u201d forces (S\u221240)."
+          "title": "Baseline ± rate×deviation (mpg)",
+          "body": "Start at baseline. Apply each penalty using the correct deviation. ‘Over 40’ forces (S−40)."
         },
         {
           "id": "p-candles",
           "type": "pattern",
           "tag": "decay",
-          "title": "Candles: constant-rate burn",
-          "body": "Write remaining height as a fraction of original: A = H(1\u2212m/t), B = H(1\u2212m/2t). Cancel H and solve."
+          "title": "Candles: constant‑rate burn",
+          "body": "Write remaining height as a fraction of original: A = H(1−m/t), B = H(1−m/2t). Cancel H and solve."
         },
         {
           "id": "p-tinypercent",
           "type": "pattern",
           "tag": "sci",
-          "title": "Tiny percent = extra \u00f7100",
-          "body": "Convert percent to decimal first. 0.0003% = 0.000003 = 3\u00d710\u207b\u2076 (not 3\u00d710\u207b\u2074)."
+          "title": "Tiny percent = extra ÷100",
+          "body": "Convert percent to decimal first. 0.0003% = 0.000003 = 3×10⁻⁶ (percent adds an extra ÷100)."
         },
         {
           "id": "p-couldbe",
           "type": "pattern",
           "tag": "ineq",
-          "title": "\u201cCould be > 1\u201d with an upper bound",
-          "body": "Use the maximum allowed x to see if the expression can exceed 1. Watch for cancellations like (1/x)\u00b7x."
+          "title": "‘Could be > 1’ with an upper bound",
+          "body": "Use the maximum allowed x to see if the expression can exceed 1. Watch for cancellations like (1/x)·x."
         },
         {
           "id": "p-range2",
@@ -133,113 +133,454 @@
           "id": "fc-kdigit",
           "type": "flashcard",
           "tag": "digits",
-          "q": "If you see powers of 4 with powers of 5, what\u2019s the move?",
-          "a": "Rewrite 4^n \u2192 2^(2n). Pair 2^k\u00b75^k = 10^k. Then count digits from the 10-exponent."
+          "q": "If you see powers of 4 with powers of 5, what’s the move?",
+          "a": "Rewrite 4^n → 2^(2n). Pair 2^k·5^k = 10^k. Then count digits from the 10‑exponent."
         },
         {
           "id": "fc-range",
           "type": "flashcard",
           "tag": "range",
           "q": "Smallest possible overall range when combining two groups?",
-          "a": "Maximize overlap; the smallest combined range can equal the largest individual range."
+          "a": "Maximise overlap; the smallest combined range can equal the largest individual range."
         },
         {
           "id": "fc-over40",
           "type": "flashcard",
           "tag": "linear",
-          "q": "What does \u201cper 10 mph over 40\u201d mean algebraically?",
-          "a": "Use the deviation (S\u221240). Then apply the rate: 0.5 per 10 \u2192 (S\u221240)/20."
+          "q": "What does ‘per 10 mph over 40’ mean algebraically?",
+          "a": "Use the deviation (S−40). Then apply the rate: 0.5 per 10 ⇒ (S−40)/20."
         },
         {
           "id": "fc-tiny",
           "type": "flashcard",
           "tag": "sci",
           "q": "Convert 0.0003% to scientific notation.",
-          "a": "0.0003% = 0.000003 = 3\u00d710\u207b\u2076 (percent adds an extra \u00f7100)."
+          "a": "0.0003% = 0.000003 = 3×10⁻⁶ (percent adds an extra ÷100)."
         },
         {
           "id": "fc-conjugate",
           "type": "flashcard",
           "tag": "radicals",
-          "q": "How do you remove radicals from a denominator like (\u221aa\u2212\u221ab)?",
-          "a": "Multiply by the conjugate (\u221aa+\u221ab). Expand squares first if that simplifies."
+          "q": "How do you remove radicals from a denominator like (√a−√b)?",
+          "a": "Multiply by the conjugate (√a+√b). Expand squares first if that simplifies."
         },
         {
           "id": "fc-denom-square",
           "type": "flashcard",
           "tag": "percent",
-          "q": "If y increases 10% and you have y\u00b2 in the denominator, what happens?",
-          "a": "The denominator multiplies by (1.1)\u00b2 = 1.21, so the whole expression is divided by 1.21."
+          "q": "If y increases 10% and you have y² in the denominator, what happens?",
+          "a": "The denominator multiplies by (1.1)² = 1.21, so the whole expression is divided by 1.21."
         }
       ]
     }
-  ],
-  "quiz": [
+    ,
     {
-      "p": "You see 4^9 \u00b7 5^17. What\u2019s the fastest plan?",
-      "opts": [
-        "Convert everything to decimals",
-        "Rewrite 4^9 as 2^18 and pair 2s with 5s into 10s",
-        "Take logs immediately",
-        "Multiply out 4^9 first"
-      ],
-      "correct": 1,
-      "why": "4^9=2^18. Pair 2^17\u00b75^17=10^17 leaving 2\u00b710^17 \u2192 digits."
+      "id": "verbal",
+      "title": "Verbal",
+      "subtitle": "Critical reasoning, sentence correction and reading comprehension",
+      "items": []
     },
     {
-      "p": "Two month ranges are 20 and 25. Smallest possible combined range?",
-      "opts": [
-        "5",
-        "20",
-        "25",
-        "45"
-      ],
-      "correct": 2,
-      "why": "Fully overlap intervals; smallest overall range equals the largest individual range (25)."
-    },
-    {
-      "p": "\u201cPenalty of 0.5 mpg per 10 mph over 40.\u201d Speed is S\u226540. Penalty term?",
-      "opts": [
-        "S/20",
-        "(S\u221240)/20",
-        "(S\u221240)/10",
-        "0.5S"
-      ],
-      "correct": 1,
-      "why": "0.5 per 10 mph \u21d2 divide by 20, and \u201cover 40\u201d \u21d2 (S\u221240)."
-    },
-    {
-      "p": "Convert 0.0003% into a decimal (or scientific notation).",
-      "opts": [
-        "3\u00d710^-4",
-        "3\u00d710^-6",
-        "3\u00d710^-3",
-        "3\u00d710^-8"
-      ],
-      "correct": 1,
-      "why": "Percent means \u00f7100: 0.0003% = 0.000003 = 3\u00d710^-6."
-    },
-    {
-      "p": "If y increases 10% and you have y^2 in the denominator, overall factor is\u2026",
-      "opts": [
-        "\u00d71.1",
-        "\u00f71.1",
-        "\u00f7(1.1)^2 = \u00f71.21",
-        "\u00d7(1.1)^2 = \u00d71.21"
-      ],
-      "correct": 2,
-      "why": "Denominator scales by (1.1)^2, so expression divides by 1.21."
-    },
-    {
-      "p": "To simplify 1/(\u221a3\u2212\u221a2), the move is\u2026",
-      "opts": [
-        "Square numerator and denominator",
-        "Multiply by conjugate \u221a3+\u221a2",
-        "Approximate roots",
-        "Factor out \u221a2"
-      ],
-      "correct": 1,
-      "why": "Conjugate removes radicals in denominator."
+      "id": "integrated",
+      "title": "Integrated",
+      "subtitle": "Graphics interpretation and multi‑source reasoning",
+      "items": []
     }
-  ]
+  ],
+  "notes": [
+    {
+      "id": "note-exponents",
+      "title": "Evaluating a^b b^c with a>0, b=2a, c=4a",
+      "steps": [
+        "Identify that b equals 2a and c equals 4a by substituting b=2a and c=2b.",
+        "Rewrite a^b as a^(2a) and b^c as (2a)^(4a).",
+        "Expand (2a)^(4a) into 2^(4a) × a^(4a).",
+        "Combine exponents: a^(2a) × a^(4a) = a^(6a). Multiply by 2^(4a) to get 16^a × a^(6a).",
+        "Express 16^a × a^(6a) as (16 a^6)^a."
+      ]
+    },
+    {
+      "id": "note-bonuses",
+      "title": "Minimising number of bonuses",
+      "steps": [
+        "Recognise that each bonus amount ($750, $1,500, and $7,350) must be used at least once.",
+        "To minimise the number of employees, maximise the number of $7,350 bonuses because larger bonuses reduce the count.",
+        "Divide the total $64,800 by $7,350. The largest integer less than this quotient is 8, giving 8 × $7,350 = $58,800.",
+        "Subtract $58,800 from $64,800 to find $6,000 remaining. Use $1,500 and $750 bonuses to make $6,000 (three $1,500 and two $750 bonuses).",
+        "Add the counts: 8 large bonuses + 3 middle bonuses + 2 small bonuses = 13 total bonuses."
+      ]
+    },
+    {
+      "id": "note-factorial",
+      "title": "Simplifying (√8! + √9!)²",
+      "steps": [
+        "Observe that 9! = 9 × 8!; rewrite √9! as √(9 × 8!) = √9 × √8! = 3√8!.",
+        "Write the sum as √8! + 3√8!, then square it using (a + b)² = a² + b² + 2ab.",
+        "Compute a² + b²: (√8!)² + (3√8!)² = 8! + 9·8! = 10·8!.",
+        "Compute the cross term: 2·√8!·3√8! = 6·8!.",
+        "Add these together to get 16·8!. Recognise that 16 = 2^4 and 8! contains 2^7 factors of 2, so the highest power of 2 dividing the result is 2^(4+7) = 2^11."
+      ]
+    },
+    {
+      "id": "note-kpower",
+      "title": "Divisibility of k^4 by 32",
+      "steps": [
+        "Rewrite 32 as 2^5. For k^4 to be divisible by 2^5, k must have enough factors of 2.",
+        "If k contains 2^t, then k^4 contains 2^(4t). You need 4t ≥ 5, so t ≥ 2.",
+        "Therefore k must be divisible by 2^2 = 4.",
+        "Any integer divisible by 4 leaves a remainder divisible by 4 when divided by 32. Among the given choices, only 4 works."
+      ]
+    },
+    {
+      "id": "note-conjugate",
+      "title": "Simplifying (√15−4√14 + √15+4√14)²",
+      "steps": [
+        "Recognise the structure (√A + √B)², which expands to A + B + 2√(AB). Here A = 15 − 4√14 and B = 15 + 4√14.",
+        "Add A and B: (15 − 4√14) + (15 + 4√14) = 30.",
+        "Multiply A and B as a difference of squares: (15 − 4√14)(15 + 4√14) = 15² − (4√14)² = 225 − 16·14 = 1.",
+        "Take the square root of AB: √1 = 1.",
+        "Combine the terms: A + B + 2√(AB) = 30 + 2·1 = 32."
+      ]
+    },
+    {
+      "id": "note-sumofsquares",
+      "title": "Solving (x−y)² + 2y² = 27",
+      "steps": [
+        "Since squares grow quickly, both (x−y)² and 2y² must be small and their sum is 27. Check small integer values of y.",
+        "For |y| > 3, 2y² exceeds 27, so possible values of y are −3 to 3.",
+        "Test y = −1. The equation becomes (x+1)² + 2 = 27 ⇒ (x+1)² = 25, which has integer solutions x = 4 and x = −6.",
+        "Of the answer choices (−2, −1, 3, 4, 5), only x = 4 works with some integer y.",
+        "Therefore 4 is a possible value of x."
+      ]
+    },
+    {
+      "id": "note-sqrt",
+      "title": "Solving x + √x = 1",
+      "steps": [
+        "Introduce a substitution t = √x, so that x = t². The equation becomes t² + t = 1.",
+        "Rearrange to t² + t − 1 = 0 and solve using the quadratic formula.",
+        "The solutions to t² + t − 1 = 0 are (−1 ± √5)/2. A square root cannot be negative, so only t = (√5 − 1)/2 is valid.",
+        "Therefore √x = (√5 − 1)/2."
+      ]
+    }
+  ],
+  "quiz": {
+    "quant": [
+      {
+        "p": "You see 4^9 × 5^17. What’s the fastest plan?",
+        "opts": [
+          "Convert everything to decimals",
+          "Rewrite 4^9 as 2^18 and pair 2s with 5s into 10s",
+          "Take logs immediately",
+          "Multiply out 4^9 first"
+        ],
+        "correct": 1,
+        "why": "4^9 = 2^18. Pair 2^17×5^17 = 10^17 leaving 2×10^17 → count digits.",
+        "hint": "Try to rewrite 4 as 2×2 and pair factors of 2 with 5."
+      },
+      {
+        "p": "Two month ranges are 20 and 25. Smallest possible combined range?",
+        "opts": [
+          "5",
+          "20",
+          "25",
+          "45"
+        ],
+        "correct": 2,
+        "why": "Fully overlap the intervals; the smallest overall range equals the largest individual range (25).",
+        "hint": "When can you overlap ranges completely?"
+      },
+      {
+        "p": "“Penalty of 0.5 mpg per 10 mph over 40.” Speed is S ≥ 40. Penalty term?",
+        "opts": [
+          "S/20",
+          "(S−40)/20",
+          "(S−40)/10",
+          "0.5S"
+        ],
+        "correct": 1,
+        "why": "0.5 per 10 mph → divide by 20, and “over 40” → use (S−40).",
+        "hint": "Think of the deviation (S−baseline) divided by the unit interval."
+      },
+      {
+        "p": "Convert 0.0003% into a decimal (or scientific notation).",
+        "opts": [
+          "3×10^-4",
+          "3×10^-6",
+          "3×10^-3",
+          "3×10^-8"
+        ],
+        "correct": 1,
+        "why": "Percent means ÷100: 0.0003% = 0.000003 = 3×10^-6.",
+        "hint": "Be sure to divide the percent by 100."
+      },
+      {
+        "p": "If y increases 10% and you have y^2 in the denominator, overall factor is…",
+        "opts": [
+          "×1.1",
+          "÷1.1",
+          "÷(1.1)^2 = ÷1.21",
+          "×(1.1)^2 = ×1.21"
+        ],
+        "correct": 2,
+        "why": "The denominator scales by (1.1)^2, so the whole expression is divided by 1.21.",
+        "hint": "Square the multiplier because the factor is squared."
+      },
+      {
+        "p": "To simplify 1/(√3−√2), the move is…",
+        "opts": [
+          "Square numerator and denominator",
+          "Multiply by conjugate √3+√2",
+          "Approximate roots",
+          "Factor out √2"
+        ],
+        "correct": 1,
+        "why": "Multiplying by the conjugate removes radicals in the denominator.",
+        "hint": "Conjugates rationalise denominators containing square roots."
+      },
+      {
+        "p": "Given b = 2a and c = 4a, which is equivalent to a^b b^c?",
+        "opts": [
+          "(2a^4)^a",
+          "(2a^6)^a",
+          "(16a^6)^a",
+          "(16a^8)^a"
+        ],
+        "correct": 2,
+        "why": "a^b = a^{2a} and b^c = (2a)^{4a} = 2^{4a}·a^{4a}. Combine exponents: 2^{4a}·a^{6a} = (16a^6)^a.",
+        "hint": "Express everything in terms of a, then combine exponents."
+      },
+      {
+        "p": "A company awards bonuses of $750, $1,500 and $7,350 each. The total amount of the bonuses is $64,800, and each amount is given to at least one employee. To minimise the number of bonuses, how many $7,350 bonuses should be given?",
+        "opts": [
+          "5",
+          "6",
+          "7",
+          "8"
+        ],
+        "correct": 3,
+        "why": "64,800 ÷ 7,350 ≈ 8.8, so you can give 8 bonuses of $7,350 without exceeding the total.",
+        "hint": "Divide the total by the largest bonus and take the greatest integer less than the result."
+      },
+      {
+        "p": "After awarding eight $7,350 bonuses, how much money remains to be allocated using the other bonuses?",
+        "opts": [
+          "$1,500",
+          "$3,000",
+          "$6,000",
+          "$9,000"
+        ],
+        "correct": 2,
+        "why": "8×7,350 = 58,800. 64,800 – 58,800 = 6,000.",
+        "hint": "Subtract the amount already allocated from the total."
+      },
+      {
+        "p": "How many $1,500 bonuses and $750 bonuses are needed to allocate the remaining $6,000?",
+        "opts": [
+          "2 of $1,500 and 3 of $750",
+          "3 of $1,500 and 2 of $750",
+          "4 of $1,500 and 0 of $750",
+          "1 of $1,500 and 6 of $750"
+        ],
+        "correct": 1,
+        "why": "To make $6,000 you can use three $1,500 bonuses ($4,500) and two $750 bonuses ($1,500).",
+        "hint": "Find a combination of 1,500 and 750 that sums to 6,000."
+      },
+      {
+        "p": "How many total bonuses did the company award to sum $64,800 using $750, $1,500, and $7,350 bonuses (each used at least once)?",
+        "opts": [
+          "11",
+          "12",
+          "13",
+          "14"
+        ],
+        "correct": 2,
+        "why": "8 large bonuses, 3 middle bonuses and 2 small bonuses give 13 total bonuses.",
+        "hint": "Add up the number of each type of bonus."
+      },
+      {
+        "p": "Identify the relationship between b and c if a > 0, b = 2a and c = 2b.",
+        "opts": [
+          "b = 2a and c = 4a",
+          "b = a/2 and c = 4a",
+          "b = 4a and c = 2a",
+          "b = 2a and c = 8a"
+        ],
+        "correct": 0,
+        "why": "Substitute b = 2a into c = 2b to get c = 2·2a = 4a.",
+        "hint": "Use substitution to express c in terms of a."
+      },
+      {
+        "p": "9! can be expressed as ___ times 8!.",
+        "opts": [
+          "9",
+          "8",
+          "72",
+          "720"
+        ],
+        "correct": 0,
+        "why": "9! = 9×8! by definition of factorial.",
+        "hint": "n! = n×(n−1)!."
+      },
+      {
+        "p": "√(8! × 9!) equals",
+        "opts": [
+          "√9 × 8!",
+          "3 × 8!",
+          "9 × √8!",
+          "8! × 9!"
+        ],
+        "correct": 1,
+        "why": "√(8!×9!) = √(9×(8!)²) = √9 × √((8!)²) = 3×8!.",
+        "hint": "Break the square root into the product of square roots."
+      },
+      {
+        "p": "Compute (√8! + √9!)^2.",
+        "opts": [
+          "14×8!",
+          "16×8!",
+          "10×8!",
+          "20×8!"
+        ],
+        "correct": 1,
+        "why": "(√8! + 3√8!)^2 = 16×8!.",
+        "hint": "Factor out √8! and use (a + b)^2 = a^2 + b^2 + 2ab."
+      },
+      {
+        "p": "What is the greatest integer n such that 2^n divides (√8! + √9!)^2?",
+        "opts": [
+          "7",
+          "8",
+          "11",
+          "12"
+        ],
+        "correct": 2,
+        "why": "16 = 2^4 and 8! contains 2^7, so 2^(4+7) = 2^11 divides the result.",
+        "hint": "Break the result into 16×8! and count factors of 2 in each part."
+      },
+      {
+        "p": "For k^4 to be divisible by 32 (2^5), how many factors of 2 must k contain?",
+        "opts": [
+          "At least one (2^1)",
+          "At least two (2^2)",
+          "At least three (2^3)",
+          "At least four (2^4)"
+        ],
+        "correct": 1,
+        "why": "If k = 2^t×…, then k^4 has 2^(4t). 4t ≥ 5 ⇒ t ≥ 2, so k must be divisible by 4.",
+        "hint": "Set 4t ≥ 5 and solve for t."
+      },
+      {
+        "p": "Which remainder r could k leave when divided by 32 if k^4 is divisible by 32?",
+        "opts": [
+          "2",
+          "4",
+          "6",
+          "8"
+        ],
+        "correct": 1,
+        "why": "k must be divisible by 4, so r must be a multiple of 4. Of the options, only 4 qualifies.",
+        "hint": "Look for remainders that are multiples of 4."
+      },
+      {
+        "p": "Compute (√15 − 4√14 + √15 + 4√14).",
+        "opts": [
+          "27",
+          "28",
+          "29",
+          "30"
+        ],
+        "correct": 3,
+        "why": "The radical terms cancel: √15 − 4√14 + √15 + 4√14 = 30.",
+        "hint": "Group like terms and notice the ±4√14 cancel."
+      },
+      {
+        "p": "Compute (15 − 4√14)(15 + 4√14).",
+        "opts": [
+          "1",
+          "15",
+          "225",
+          "224"
+        ],
+        "correct": 0,
+        "why": "This is (a−b)(a+b) = a^2 − b^2. Here a=15, b=4√14: 225 − 16·14 = 225 − 224 = 1.",
+        "hint": "Use the difference‑of‑squares formula."
+      },
+      {
+        "p": "Evaluate (√15 − 4√14 + √15 + 4√14)^2.",
+        "opts": [
+          "30",
+          "32",
+          "34",
+          "36"
+        ],
+        "correct": 1,
+        "why": "It equals (A+B)^2 where A+B=30 and 2√(AB)=2. So the sum is 30+2=32.",
+        "hint": "Use (√A+√B)^2 = A + B + 2√(AB)."
+      },
+      {
+        "p": "For (x − y)^2 + 2y^2 = 27 with integers x and y, what values can y take?",
+        "opts": [
+          "Only 0",
+          "−3 ≤ y ≤ 3",
+          "Only positive values",
+          "Any integer"
+        ],
+        "correct": 1,
+        "why": "2y^2 must be ≤ 27, so y^2 ≤ 13.5 ⇒ |y| ≤ 3.",
+        "hint": "Set 2y^2 ≤ 27 and solve for y."
+      },
+      {
+        "p": "If y = −1 in (x − y)^2 + 2y^2 = 27, which x values satisfy the equation?",
+        "opts": [
+          "x = 4 and x = −6",
+          "x = 4 only",
+          "x = −6 only",
+          "No integer solutions"
+        ],
+        "correct": 0,
+        "why": "Plugging y=−1 gives (x+1)^2 + 2 = 27 ⇒ (x+1)^2 = 25 ⇒ x+1 = ±5 ⇒ x = 4 or −6.",
+        "hint": "Substitute y = −1 and solve the resulting quadratic."
+      },
+      {
+        "p": "Which of the following could be the value of x if (x − y)^2 + 2y^2 = 27?",
+        "opts": [
+          "−2",
+          "−1",
+          "3",
+          "4",
+          "5"
+        ],
+        "correct": 3,
+        "why": "Testing small y values shows that x = 4 with y = −1 yields a solution.",
+        "hint": "Check each x by trying small values of y in the equation."
+      },
+      {
+        "p": "Let t = √x. If x + √x = 1, what equation does t satisfy?",
+        "opts": [
+          "t^2 + t − 1 = 0",
+          "t^2 − t − 1 = 0",
+          "t^2 + t + 1 = 0",
+          "t^2 − t + 1 = 0"
+        ],
+        "correct": 0,
+        "why": "Substitute t=√x ⇒ x=t^2. Then t^2 + t = 1 ⇒ t^2 + t − 1 = 0.",
+        "hint": "Replace x with t^2 and move all terms to one side."
+      },
+      {
+        "p": "Which solution of t^2 + t − 1 = 0 is valid for t = √x?",
+        "opts": [
+          "−(√5 + 1)/2",
+          "(√5 − 1)/2",
+          "(√5 + 1)/2",
+          "Both solutions"
+        ],
+        "correct": 1,
+        "why": "The quadratic formula gives t = (−1 ± √5)/2. Only (√5 − 1)/2 is non‑negative and equals √x.",
+        "hint": "A square root must be non‑negative."
+      }
+    ],
+    "verbal": [],
+    "integrated": []
+  }
 }

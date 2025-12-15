@@ -3,25 +3,72 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <meta name="theme-color" content="#0b1130"/>
-  <title>Offline — GMAT Quant</title>
+  <!--
+    Offline fallback page for the GMAT Study PWA.
+    This light‑themed page appears when the network is unavailable and
+    the requested resource isn’t cached. It mirrors the aesthetic of the
+    rest of the app with soft colours and a concise message.
+  -->
+  <meta name="theme-color" content="#012D5A"/>
+  <title>Offline — GMAT Study</title>
   <style>
-    body{margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      background: #050612; color:#e9ecff; display:grid; place-items:center; height:100vh; padding:18px;}
-    .card{max-width:520px; border:1px solid rgba(255,255,255,.12); border-radius:16px;
-      background: rgba(255,255,255,.06); padding:16px;}
-    .k{font-family: ui-monospace, Menlo, Consolas, monospace; font-size:12px; opacity:.85}
-    h1{margin:8px 0 6px; font-size:18px}
-    p{margin:0; opacity:.85; line-height:1.45}
-    a{color:#28d7ff}
+    :root {
+      --bg: #f0f4f8;
+      --card-bg: #ffffff;
+      --border: #dde3eb;
+      --text: #012D5A;
+      --subtext: #4a6a8a;
+      --accent: #0066cc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: var(--bg);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .card {
+      max-width: 540px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .k {
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 12px;
+      opacity: 0.8;
+      color: var(--accent);
+    }
+    h1 {
+      margin: 12px 0 8px;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+    p {
+      margin: 0;
+      opacity: 0.85;
+      line-height: 1.5;
+      color: var(--subtext);
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="k">OFFLINE MODE</div>
-    <h1>You’re offline — but the guide still works.</h1>
-    <p>If this is the first time you opened the app, connect once so it can cache everything. Then it’s fully offline.</p>
-    <p style="margin-top:10px;"><a href="./index.html">Return to the app</a></p>
+    <h1>You’re offline — but your study guide still works.</h1>
+    <p>If this is the first time you opened the app, connect once so it can cache everything. After that the entire study guide works offline.</p>
+    <p style="margin-top:14px;"><a href="./index.html">Return to the app</a></p>
   </div>
 </body>
 </html>
