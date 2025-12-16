@@ -141,7 +141,19 @@
     state.view = view;
     $$('.navItem').forEach(b=> b.setAttribute('aria-current', b.dataset.view===view ? 'page' : 'false'));
     const sec = state.content.sections.find(s=>s.id===view);
+    if(view === 'flashcards'){
+      // Switch to the flashcards view. Render one card at a time with
+      // flip and navigation controls. The subtitle guides the learner to
+      // tap cards to reveal answers.
+      viewTitle.textContent = 'Flashcards';
+      viewSubtitle.textContent = 'Study each card and tap to flip for the answer.';
+      renderFlashcards();
+      return;
+    }
     if(view === 'quiz'){
+      // Switch to the quiz view. A large start button is displayed at first.
+      // Once the user taps Start, questions are randomised and presented
+      // step‑by‑step. Hints and restart logic are handled within renderQuiz().
       viewTitle.textContent = 'Quiz';
       viewSubtitle.textContent = 'Tap Start, then answer each question step‑by‑step.';
       renderQuiz();
@@ -541,6 +553,359 @@
     onTap(wrap.querySelector('#nClear'), ()=>{ nText.value=''; localStorage.setItem('gmat_pwa_notes',''); });
     statCount.textContent = notes.length ? String(notes.length) : '—';
     statDone.textContent = '—';
+  }
+
+  // --------------------- Flashcards View ---------------------
+  /**
+   * Render the flashcards view. Only one card is shown at a time. The front
+   * displays the question/title and the back shows the answer/body. Learners
+   * can flip to reveal the answer and navigate between cards using the Prev
+   * and Next buttons. Cards are shuffled on each visit to promote better
+   * retention.
+   */
+  function renderFlashcards(){
+    const cards = getSectionItems('flashcards');
+    // Update stats
+    statCount.textContent = String(cards.length);
+    statDone.textContent = '0';
+    if(!cards || !cards.length){
+      list.innerHTML = '<p style="padding:12px;">No flashcards found.</p>';
+      return;
+    }
+    // Create a shuffled copy of the cards
+    const fcCards = cards.slice();
+    fcCards.sort(()=>Math.random() - 0.5);
+    let fcIndex = 0;
+    let flipped = false;
+    // Build the header and body for flashcards
+    const header = document.createElement('div');
+    header.className = 'item';
+    header.setAttribute('aria-expanded','true');
+    header.innerHTML = `
+      <div class="itemTop">
+        <div class="left">
+          <p class="t">Flashcards</p>
+          <p class="s"><span id="fcNum">1</span> / ${fcCards.length}</p>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="kbtn" id="fcPrev" aria-label="Previous card">Prev</button>
+          <button class="kbtn" id="fcFlip" aria-label="Flip card">Flip</button>
+          <button class="kbtn" id="fcNext" aria-label="Next card">Next</button>
+        </div>
+      </div>
+      <div class="itemBody" style="display:block;">
+        <div class="flashCardContainer">
+          <div class="flashCard" id="flashCard">
+            <div class="cardInner">
+              <div class="cardFront"></div>
+              <div class="cardBack"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    list.innerHTML = '';
+    list.appendChild(header);
+    const fcNum = header.querySelector('#fcNum');
+    const flipBtn = header.querySelector('#fcFlip');
+    const nextBtn = header.querySelector('#fcNext');
+    const prevBtn = header.querySelector('#fcPrev');
+    const cardEl = header.querySelector('#flashCard');
+    const innerEl = cardEl.querySelector('.cardInner');
+    const frontEl = cardEl.querySelector('.cardFront');
+    const backEl  = cardEl.querySelector('.cardBack');
+    // Render the current card
+    function paint(){
+      const card = fcCards[fcIndex];
+      flipped = false;
+      innerEl.style.transform = '';
+      frontEl.textContent = card.q || card.title || '';
+      backEl.textContent  = card.a || card.body || '';
+      fcNum.textContent = String(fcIndex + 1);
+    }
+    // Event handlers
+    onTap(flipBtn, ()=>{
+      flipped = !flipped;
+      innerEl.style.transform = flipped ? 'rotateY(180deg)' : '';
+    });
+    onTap(nextBtn, ()=>{
+      fcIndex = (fcIndex + 1) % fcCards.length;
+      paint();
+    });
+    onTap(prevBtn, ()=>{
+      fcIndex = (fcIndex - 1 + fcCards.length) % fcCards.length;
+      paint();
+    });
+    // Flip on card tap as well for convenience
+    onTap(cardEl, ()=>{
+      flipped = !flipped;
+      innerEl.style.transform = flipped ? 'rotateY(180deg)' : '';
+    });
+    paint();
+  }
+
+  // --------------------- Quiz View ---------------------
+  /**
+   * Render the quiz view with multi‑step questions. Questions are grouped by
+   * topic (e.g. factorial, radical) and groups are shuffled each time to
+   * provide variety while preserving the logical order of steps within each
+   * topic. A large Start button appears initially; once tapped the quiz
+   * begins. The learner must answer each question in order. After two
+   * incorrect attempts on a step, the quiz automatically restarts and the
+   * order of groups reshuffles. Hints are shown after the first incorrect
+   * attempt. Scores update in real‑time.
+   */
+  function renderQuiz(){
+    const allQuiz = state.content.quiz || {};
+    // Determine which section’s questions to use. If the user selects the special
+    // 'all' section (added below), flatten all arrays into one. Otherwise pick
+    // the chosen section or fall back to the first available.
+    let selected = state.quizSection;
+    const availableKeys = Array.isArray(allQuiz) ? [] : Object.keys(allQuiz);
+    if(selected === 'all'){
+      // Flatten all arrays from each section
+      let combined = [];
+      availableKeys.forEach(key => { combined = combined.concat(allQuiz[key] || []); });
+      var qbankOrig = combined;
+    }else if(Array.isArray(allQuiz)){
+      qbankOrig = allQuiz;
+    }else{
+      if(!allQuiz[selected]){
+        selected = availableKeys[0] || '';
+        state.quizSection = selected;
+      }
+      qbankOrig = allQuiz[selected] || [];
+    }
+    // Clone and randomise dynamic parts of the questions. We will not shuffle
+    // order yet; grouping happens after this loop.
+    const qbankBase = qbankOrig.map(q => ({...q}));
+    for(let i=0; i<qbankBase.length; i++){
+      const q = qbankBase[i];
+      // Replace any range question with a freshly generated one
+      if(/Two month ranges/.test(q.p)){
+        qbankBase[i] = generateRangeQuestion();
+      }
+      // Randomise exponents for k‑digit style prompts
+      if(/4\^\d+.*5\^\d+/.test(q.p)){
+        const m = 4 + Math.floor(Math.random()*9);
+        const n = m + Math.floor(Math.random()*5);
+        q.p = `You see 4^${m} × 5^${n}. What’s the fastest plan?`;
+      }
+      // Ensure a hint exists
+      if(!q.hint){
+        q.hint = (q.why || '').split(/[.!?]/)[0] + '.';
+      }
+    }
+    // Group questions by topic. The detectGroup function inspects the
+    // prompt text and returns a key. All steps within the same topic
+    // remain together when shuffling.
+    function detectGroup(q){
+      const p = (q.p || '').toLowerCase();
+      if(p.includes('4^') && p.includes('5^')) return 'exponent';
+      if(p.includes('range')) return 'range';
+      if(p.includes('penalty') || p.includes('over 40')) return 'linear';
+      if(p.includes('convert 0.0003')) return 'sci';
+      if(p.includes('y increases 10') || p.includes('denominator')) return 'denominator';
+      if(p.includes('√3') || p.includes('conjugate') || p.includes('√15')) return 'radical';
+      if(p.includes('8!') || p.includes('9!')) return 'factorial';
+      if(p.includes('k^4') || p.includes('remainder')) return 'k4';
+      if(p.includes('bonus')) return 'bonus';
+      if(p.includes('(x − y)') || p.includes('(x-y)')) return 'diophantine';
+      if(p.includes('√x') || p.includes('t = √x')) return 'sqrt';
+      if(p.includes('b = 2a')) return 'exponent';
+      return 'misc';
+    }
+    // Shuffle an array in place (Fisher–Yates)
+    function shuffle(arr){
+      for(let i=arr.length-1; i>0; i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+    // Partition questions into groups
+    const groups = {};
+    qbankBase.forEach(q => {
+      const g = detectGroup(q);
+      if(!groups[g]) groups[g] = [];
+      groups[g].push(q);
+    });
+    const groupKeys = Object.keys(groups);
+    // When multiple sections exist, add an All tab to the beginning of section keys.
+    const quizKeys = availableKeys.length > 1 ? ['all', ...availableKeys] : availableKeys;
+    // Shuffle groups for random order
+    shuffle(groupKeys);
+    // Flatten into a new qbank
+    const qbank = [];
+    groupKeys.forEach(k => { qbank.push(...groups[k]); });
+    // Reset scoreboard and index
+    let quizIdx = 0;
+    let quizScore = 0;
+    state.quizWrong = 0;
+    let quizStarted = false;
+    let answered = false;
+    // Build the quiz header UI
+    const header = document.createElement('div');
+    header.className = 'item';
+    header.setAttribute('aria-expanded','true');
+    const sectionButtons = quizKeys.map(k => {
+      const label = k === 'all' ? 'All' : k.charAt(0).toUpperCase()+k.slice(1);
+      const active = state.quizSection === k;
+      return `<button class="kbtn${active?' good':''}" data-sec="${k}">${label}</button>`;
+    }).join(' ');
+    header.innerHTML = `
+      <div class="itemTop">
+        <div class="left">
+          <p class="t">Quiz Mode</p>
+          <p class="s">Section ${state.quizSection.toUpperCase()} • Points <span id="qScore">0</span> • Wrong <span id="qWrong">0</span> • Question <span id="qNum">0</span>/${qbank.length}</p>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          ${sectionButtons}
+          <span class="badge">quiz</span>
+          <button class="kbtn good" id="qStart">Start</button>
+          <button class="kbtn" id="qNext">Next</button>
+          <button class="kbtn bad" id="qReset">Reset</button>
+        </div>
+      </div>
+      <div class="itemBody" style="display:block">
+        <div class="qProgress"><div class="qProgressBar" id="qProgressBar"></div></div>
+        <div id="qPrompt" style="font-size:13px; line-height:1.45; margin-bottom:10px;">Tap Start to begin.</div>
+        <div id="qOpts" class="actionsRow" style="gap:8px;"></div>
+        <div id="qWhy" class="muted" style="margin-top:10px;"></div>
+      </div>
+    `;
+    list.innerHTML = '';
+    list.appendChild(header);
+    // DOM refs
+    const qStart = header.querySelector('#qStart');
+    const qNext  = header.querySelector('#qNext');
+    const qReset = header.querySelector('#qReset');
+    const qPrompt = header.querySelector('#qPrompt');
+    const qOpts   = header.querySelector('#qOpts');
+    const qWhy    = header.querySelector('#qWhy');
+    const qScoreEl= header.querySelector('#qScore');
+    const qWrongEl= header.querySelector('#qWrong');
+    const qNumEl  = header.querySelector('#qNum');
+    const qProgBar= header.querySelector('#qProgressBar');
+    // Section switch handler
+    header.querySelectorAll('button[data-sec]').forEach(btn => {
+      onTap(btn, () => {
+        const sec = btn.getAttribute('data-sec');
+        if(sec && sec !== state.quizSection){
+          state.quizSection = sec;
+          renderQuiz();
+        }
+      });
+    });
+    // Paint a question
+    function paint(){
+      if(!quizStarted){
+        qPrompt.textContent = 'Tap Start to begin.';
+        qOpts.innerHTML = '';
+        qWhy.textContent = '';
+        qNumEl.textContent = '0';
+        qScoreEl.textContent = String(quizScore);
+        qWrongEl.textContent = String(state.quizWrong);
+        if(qProgBar) qProgBar.style.width = '0%';
+        return;
+      }
+      const q = qbank[quizIdx];
+      answered = false;
+      let attempts = 0;
+      qNumEl.textContent = String(quizIdx+1);
+      qScoreEl.textContent = String(quizScore);
+      qWrongEl.textContent = String(state.quizWrong);
+      if(qProgBar){
+        const ratio = quizIdx / qbank.length;
+        qProgBar.style.width = (ratio * 100) + '%';
+      }
+      qPrompt.textContent = q.p;
+      qWhy.textContent = '';
+      qOpts.innerHTML = '';
+      // Render options as buttons
+      q.opts.forEach((opt, idx) => {
+        const b = document.createElement('button');
+        b.className = 'kbtn';
+        b.type = 'button';
+        b.textContent = '• ' + opt;
+        onTap(b, () => {
+          // disable all buttons immediately
+          Array.from(qOpts.querySelectorAll('button')).forEach(x=>x.disabled=true);
+          answered = true;
+          if(idx === q.correct){
+            quizScore += attempts === 0 ? 1 : 0.5;
+            b.classList.add('good');
+            qWhy.innerHTML = '✅ Correct. ' + q.why;
+          }else{
+            b.classList.add('bad');
+            if(attempts === 0){
+              qWhy.innerHTML = 'Hint: ' + (q.hint || 'Think carefully.');
+              // re-enable other buttons except the one clicked
+              Array.from(qOpts.querySelectorAll('button')).forEach((btn, j) => {
+                if(j !== idx) btn.disabled = false;
+              });
+              attempts = 1;
+              answered = false;
+              return;
+            }
+            // second wrong
+            state.quizWrong += 1;
+            const correctBtn = qOpts.querySelectorAll('button')[q.correct];
+            if(correctBtn) correctBtn.classList.add('good');
+            qWhy.innerHTML = '❌ Not it. ' + q.why;
+            // After a brief pause, restart the quiz with reshuffled groups
+            setTimeout(() => {
+              renderQuiz();
+            }, 1600);
+          }
+          qScoreEl.textContent = String(quizScore);
+          qWrongEl.textContent = String(state.quizWrong);
+        });
+        qOpts.appendChild(b);
+      });
+    }
+    // Start the quiz: shuffle groups again and reset counters
+    function startQuiz(){
+      quizStarted = true;
+      // Reshuffle groups again on each start for variety
+      shuffle(groupKeys);
+      qbank.length = 0;
+      groupKeys.forEach(k => { qbank.push(...groups[k]); });
+      quizIdx = 0;
+      quizScore = 0;
+      state.quizWrong = 0;
+      if(qProgBar) qProgBar.style.width = '0%';
+      paint();
+    }
+    // Next question
+    function nextQuestion(){
+      if(!quizStarted || !answered) return;
+      quizIdx++;
+      if(quizIdx >= qbank.length){
+        // End of quiz. Show summary and reset button to play again.
+        qPrompt.textContent = `Done! Your score: ${quizScore.toFixed(1)} / ${qbank.length}`;
+        qOpts.innerHTML = '';
+        qWhy.innerHTML = '';
+        if(qProgBar) qProgBar.style.width = '100%';
+        return;
+      }
+      paint();
+    }
+    // Reset the quiz to initial state
+    function resetQuiz(){
+      quizStarted = false;
+      quizIdx = 0;
+      quizScore = 0;
+      state.quizWrong = 0;
+      paint();
+    }
+    onTap(qStart, startQuiz);
+    onTap(qNext, nextQuestion);
+    onTap(qReset, resetQuiz);
+    // Update total questions count
+    statCount.textContent = String(qbank.length);
+    statDone.textContent = String(quizScore);
+    // Initial paint shows the pre‑start instructions
+    paint();
   }
 
   // --------------------- Expand/Collapse & Search ---------------------

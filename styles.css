@@ -227,6 +227,60 @@ code{font-family:var(--mono); font-size:12px; color:var(--text);}
 /* Dark mode tweaks for progress bar */
 [data-theme="dark"] .qProgress{background:rgba(255,255,255,.15);}
 [data-theme="dark"] .qProgressBar{background:rgba(78,115,235,.75);}
+
+/* Flashcard container and card styles for Quizlet‑like experience */
+.flashCardContainer{
+  display:flex;
+  justify-content:center;
+  perspective:800px;
+  width:100%;
+  margin:20px 0;
+}
+.flashCard{
+  width:100%;
+  max-width:360px;
+  height:220px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(255,255,255,.6);
+  position:relative;
+}
+.cardInner{
+  width:100%;
+  height:100%;
+  transform-style:preserve-3d;
+  transition: transform .6s;
+}
+.cardFront,
+.cardBack{
+  position:absolute;
+  width:100%;
+  height:100%;
+  backface-visibility:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  font-size:14px;
+  color:var(--text);
+}
+.cardBack{
+  transform:rotateY(180deg);
+}
+.flashControls{
+  margin-top:10px;
+  display:flex;
+  justify-content:center;
+  gap:8px;
+}
+[data-theme="dark"] .flashCard{
+  background:rgba(255,255,255,.05);
+  border-color:var(--line);
+}
+[data-theme="dark"] .cardFront,
+[data-theme="dark"] .cardBack{
+  color:var(--text);
+}
 .cmd{border:1px solid var(--line); background:rgba(255,255,255,.6); border-radius:14px; padding:10px; cursor:pointer; color:var(--text);}
 .cmd .c1{font-family:var(--mono); font-size:12px; color:var(--text)}
 .cmd .c2{margin-top:4px; font-size:12px; color:var(--muted)}
