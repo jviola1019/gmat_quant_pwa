@@ -1,9 +1,9 @@
 /**
  * GMAT Study PWA - Service Worker
- * Version 5.0 - Complete Overhaul
+ * Version 6.0 - Multiple Choice Quiz System
  */
 
-const CACHE_NAME = 'gmat-v5';
+const CACHE_NAME = 'gmat-v6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -15,6 +15,7 @@ const ASSETS_TO_CACHE = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/new_logo.png',
+  './icons/logo.svg',
   './offline.html',
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
   'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Google+Sans:wght@400;500;600;700&display=swap'

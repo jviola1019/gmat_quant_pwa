@@ -1,10 +1,10 @@
 /**
  * GMAT Study PWA - Main Application
- * Version 5.0 - Complete Overhaul
+ * Version 6.0 - Multiple Choice Quiz System
  *
  * Features:
- * - Multi-step quiz with step-by-step answering
- * - Quizlet-style flashcards with flip animation
+ * - Multiple choice quiz with step-by-step answering
+ * - Quizlet-style flashcards with flip animation and reset
  * - Organized cheatsheet by category
  * - 2 strikes on same step = quiz restart
  */
@@ -18,16 +18,18 @@
     data: [],
     quiz: {
       active: false,
-      started: false,        // true after START is clicked (shows section selector)
+      started: false,
       queue: [],
       qIndex: 0,
       sIndex: 0,
-      stepStrikes: 0,        // strikes for current step only
-      filter: 'all'
+      stepStrikes: 0,
+      filter: 'all',
+      selectedAnswer: null
     },
     flashcard: {
       index: 0,
-      flipped: false
+      flipped: false,
+      completed: false
     }
   };
 
@@ -116,6 +118,19 @@
       section.items.forEach(item => {
         const card = document.createElement('div');
         card.className = 'item-card';
+
+        let keyFormulasHtml = '';
+        if (item.cheatsheet.keyFormulas && item.cheatsheet.keyFormulas.length > 0) {
+          keyFormulasHtml = `
+            <div class="item-formulas">
+              <span class="formulas-label">Key Formulas:</span>
+              <ul class="formulas-list">
+                ${item.cheatsheet.keyFormulas.map(f => `<li>${f}</li>`).join('')}
+              </ul>
+            </div>
+          `;
+        }
+
         card.innerHTML = `
           <div class="item-header">
             <h3 class="item-title">${item.cheatsheet.title}</h3>
@@ -125,6 +140,7 @@
           </div>
           <div class="item-body">${item.cheatsheet.body}</div>
           ${item.cheatsheet.example ? `<div class="item-example"><strong>Example:</strong> ${item.cheatsheet.example}</div>` : ''}
+          ${keyFormulasHtml}
         `;
         cardList.appendChild(card);
       });
@@ -137,7 +153,7 @@
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // FLASHCARDS VIEW - Quizlet Style
+  // FLASHCARDS VIEW - Quizlet Style with Reset
   // ═══════════════════════════════════════════════════════════════
   function renderFlashcards() {
     const deck = state.data.filter(i => i.flashcard);
@@ -146,9 +162,19 @@
       return;
     }
 
-    // Circular bounds
-    if (state.flashcard.index >= deck.length) state.flashcard.index = 0;
-    if (state.flashcard.index < 0) state.flashcard.index = deck.length - 1;
+    // Check if completed all cards
+    if (state.flashcard.completed) {
+      renderFlashcardComplete(deck);
+      return;
+    }
+
+    // Bounds check
+    if (state.flashcard.index >= deck.length) {
+      state.flashcard.completed = true;
+      renderFlashcardComplete(deck);
+      return;
+    }
+    if (state.flashcard.index < 0) state.flashcard.index = 0;
 
     const item = deck[state.flashcard.index];
 
@@ -180,19 +206,23 @@
       </div>
 
       <div class="fc-controls">
-        <button class="fc-nav-btn" id="fc-prev" aria-label="Previous card">
-          <span class="fc-nav-icon">‹</span>
+        <button class="fc-nav-btn" id="fc-prev" ${state.flashcard.index === 0 ? 'disabled' : ''} aria-label="Previous card">
+          <span class="fc-nav-icon">&lt;</span>
           <span class="fc-nav-text">Previous</span>
         </button>
-        <button class="fc-nav-btn" id="fc-next" aria-label="Next card">
-          <span class="fc-nav-text">Next</span>
-          <span class="fc-nav-icon">›</span>
+        <button class="fc-nav-btn primary" id="fc-next" aria-label="Next card">
+          <span class="fc-nav-text">${state.flashcard.index === deck.length - 1 ? 'Finish' : 'Next'}</span>
+          <span class="fc-nav-icon">&gt;</span>
         </button>
       </div>
 
       <div class="fc-keyboard-hint">
-        Use ← → arrow keys to navigate, Space to flip
+        Use arrow keys to navigate, Space to flip
       </div>
+
+      <button class="fc-reset-btn" id="fc-reset">
+        Reset Deck
+      </button>
     `;
 
     main.appendChild(container);
@@ -207,9 +237,11 @@
     // Navigation handlers
     container.querySelector('#fc-prev').addEventListener('click', (e) => {
       e.stopPropagation();
-      state.flashcard.index--;
-      state.flashcard.flipped = false;
-      renderFlashcards();
+      if (state.flashcard.index > 0) {
+        state.flashcard.index--;
+        state.flashcard.flipped = false;
+        renderFlashcards();
+      }
     });
 
     container.querySelector('#fc-next').addEventListener('click', (e) => {
@@ -219,13 +251,21 @@
       renderFlashcards();
     });
 
+    // Reset handler
+    container.querySelector('#fc-reset').addEventListener('click', () => {
+      state.flashcard.index = 0;
+      state.flashcard.flipped = false;
+      state.flashcard.completed = false;
+      renderFlashcards();
+    });
+
     // Keyboard navigation
     const handleKeydown = (e) => {
       if (state.view !== 'flashcards') {
         document.removeEventListener('keydown', handleKeydown);
         return;
       }
-      if (e.key === 'ArrowLeft') {
+      if (e.key === 'ArrowLeft' && state.flashcard.index > 0) {
         state.flashcard.index--;
         state.flashcard.flipped = false;
         renderFlashcards();
@@ -242,17 +282,61 @@
     document.addEventListener('keydown', handleKeydown);
   }
 
+  // Flashcard Completion Screen
+  function renderFlashcardComplete(deck) {
+    const container = document.createElement('div');
+    container.className = 'flashcard-complete-screen';
+
+    container.innerHTML = `
+      <div class="complete-content">
+        <div class="complete-icon">&#x2714;</div>
+        <h2 class="complete-title">Deck Complete!</h2>
+        <p class="complete-subtitle">You've reviewed all ${deck.length} flashcards.</p>
+
+        <div class="complete-actions">
+          <button class="complete-btn primary" id="fc-restart">
+            Review Again
+          </button>
+          <button class="complete-btn secondary" id="fc-shuffle">
+            Shuffle & Review
+          </button>
+        </div>
+      </div>
+    `;
+
+    main.appendChild(container);
+
+    container.querySelector('#fc-restart').addEventListener('click', () => {
+      state.flashcard.index = 0;
+      state.flashcard.flipped = false;
+      state.flashcard.completed = false;
+      renderFlashcards();
+    });
+
+    container.querySelector('#fc-shuffle').addEventListener('click', () => {
+      // Shuffle the flashcard order by shuffling data
+      for (let i = state.data.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [state.data[i], state.data[j]] = [state.data[j], state.data[i]];
+      }
+      state.flashcard.index = 0;
+      state.flashcard.flipped = false;
+      state.flashcard.completed = false;
+      renderFlashcards();
+    });
+  }
+
   // ═══════════════════════════════════════════════════════════════
-  // QUIZ VIEW - Multi-Step with Section Tabs
+  // QUIZ VIEW - Multiple Choice with Section Tabs
   // ═══════════════════════════════════════════════════════════════
   function renderQuiz() {
-    // Phase 1: Initial START screen (only large button)
+    // Phase 1: Initial START screen
     if (!state.quiz.started) {
       renderQuizStart();
       return;
     }
 
-    // Phase 2: Section selector (after START, before quiz begins)
+    // Phase 2: Section selector
     if (!state.quiz.active) {
       renderQuizSectionSelector();
       return;
@@ -275,27 +359,40 @@
 
     container.innerHTML = `
       <div class="quiz-hero">
-        <img src="icons/new_logo.png" alt="GMAT Logo" class="quiz-logo" />
+        <div class="quiz-logo-container">
+          <svg class="quiz-logo-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="10" width="100" height="100" rx="16" fill="url(#grad1)" />
+            <path d="M35 55L50 70L85 35" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+            <path d="M30 85H90" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+            <path d="M30 95H70" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.3"/>
+            <defs>
+              <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#a8c7fa;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#7c4dff;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
         <h1 class="quiz-title">GMAT Quiz</h1>
-        <p class="quiz-subtitle">Multi-step problem solving</p>
+        <p class="quiz-subtitle">Multiple choice problem solving</p>
       </div>
 
       <button class="quiz-start-btn" id="quiz-start">
         <span class="start-btn-text">START</span>
-        <span class="start-btn-icon">→</span>
+        <span class="start-btn-icon">&rarr;</span>
       </button>
 
       <div class="quiz-rules">
         <div class="rule-item">
-          <span class="rule-icon">📝</span>
-          <span class="rule-text">Step-by-step questions</span>
+          <span class="rule-icon">&#x1F4DD;</span>
+          <span class="rule-text">Step-by-step multiple choice</span>
         </div>
         <div class="rule-item">
-          <span class="rule-icon">⚠️</span>
+          <span class="rule-icon">&#x26A0;</span>
           <span class="rule-text">2 wrong answers on a step = restart</span>
         </div>
         <div class="rule-item">
-          <span class="rule-icon">🎯</span>
+          <span class="rule-icon">&#x1F3AF;</span>
           <span class="rule-text">Complete all steps to finish</span>
         </div>
       </div>
@@ -314,12 +411,12 @@
     const container = document.createElement('div');
     container.className = 'quiz-section-selector';
 
-    // Count questions per section
+    // Count questions per section (check for quiz.steps)
     const counts = {
-      all: state.data.filter(i => i.quiz && i.quiz.length > 0).length,
-      quant: state.data.filter(i => i.quiz && i.quiz.length > 0 && i.section === 'quant').length,
-      verbal: state.data.filter(i => i.quiz && i.quiz.length > 0 && i.section === 'verbal').length,
-      integrated: state.data.filter(i => i.quiz && i.quiz.length > 0 && i.section === 'integrated').length
+      all: state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0).length,
+      quant: state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0 && i.section === 'quant').length,
+      verbal: state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0 && i.section === 'verbal').length,
+      integrated: state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0 && i.section === 'integrated').length
     };
 
     container.innerHTML = `
@@ -350,7 +447,7 @@
       </button>
 
       <button class="quiz-back-btn" id="quiz-back">
-        ← Back
+        &larr; Back
       </button>
     `;
 
@@ -375,10 +472,10 @@
     });
   }
 
-  // Quiz Phase 3: Active Question
+  // Quiz Phase 3: Active Question (Multiple Choice)
   function renderQuizQuestion(qItem) {
-    const step = qItem.quiz[state.quiz.sIndex];
-    const totalSteps = qItem.quiz.length;
+    const step = qItem.quiz.steps[state.quiz.sIndex];
+    const totalSteps = qItem.quiz.steps.length;
     const totalQuestions = state.quiz.queue.length;
 
     // Progress calculation
@@ -386,6 +483,14 @@
 
     const container = document.createElement('div');
     container.className = 'quiz-question-view';
+
+    // Generate choice buttons
+    const choicesHtml = step.choices.map((choice, idx) => `
+      <button class="quiz-choice-btn ${state.quiz.selectedAnswer === idx ? 'selected' : ''}" data-index="${idx}">
+        <span class="choice-letter">${String.fromCharCode(65 + idx)}</span>
+        <span class="choice-text">${choice}</span>
+      </button>
+    `).join('');
 
     container.innerHTML = `
       <div class="quiz-header">
@@ -402,31 +507,24 @@
         <div class="quiz-step-indicator">
           ${Array.from({ length: totalSteps }, (_, i) => `
             <div class="step-dot ${i < state.quiz.sIndex ? 'completed' : i === state.quiz.sIndex ? 'active' : ''}">
-              ${i < state.quiz.sIndex ? '✓' : i + 1}
+              ${i < state.quiz.sIndex ? '&#x2713;' : i + 1}
             </div>
           `).join('')}
         </div>
 
-        <div class="quiz-question-text">${step.p}</div>
+        <div class="quiz-question-text">${step.prompt}</div>
 
-        <div class="quiz-input-wrapper">
-          <input
-            type="text"
-            class="quiz-input"
-            id="quiz-answer"
-            placeholder="Type your answer..."
-            autocomplete="off"
-            autocapitalize="off"
-            spellcheck="false"
-          />
-          <div class="quiz-strike-indicator">
-            ${state.quiz.stepStrikes > 0 ? `<span class="strike-warning">${state.quiz.stepStrikes}/2 attempts</span>` : ''}
-          </div>
+        <div class="quiz-choices" id="quiz-choices">
+          ${choicesHtml}
+        </div>
+
+        <div class="quiz-strike-indicator">
+          ${state.quiz.stepStrikes > 0 ? `<span class="strike-warning">${state.quiz.stepStrikes}/2 attempts</span>` : ''}
         </div>
 
         <div class="quiz-feedback" id="quiz-feedback"></div>
 
-        <button class="quiz-submit-btn" id="quiz-submit">
+        <button class="quiz-submit-btn" id="quiz-submit" ${state.quiz.selectedAnswer === null ? 'disabled' : ''}>
           Check Answer
         </button>
       </div>
@@ -438,36 +536,55 @@
 
     main.appendChild(container);
 
-    const input = container.querySelector('#quiz-answer');
+    const choicesContainer = container.querySelector('#quiz-choices');
     const submitBtn = container.querySelector('#quiz-submit');
     const feedback = container.querySelector('#quiz-feedback');
 
-    // Focus input
-    setTimeout(() => input.focus(), 100);
+    // Choice selection handlers
+    choicesContainer.querySelectorAll('.quiz-choice-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Remove selected from all
+        choicesContainer.querySelectorAll('.quiz-choice-btn').forEach(b => b.classList.remove('selected'));
+        // Add selected to clicked
+        btn.classList.add('selected');
+        state.quiz.selectedAnswer = parseInt(btn.dataset.index);
+        submitBtn.disabled = false;
+      });
+    });
 
     // Submit handler
     const checkAnswer = () => {
-      const userAnswer = input.value.trim();
-      if (!userAnswer) {
+      if (state.quiz.selectedAnswer === null) {
         feedback.className = 'quiz-feedback error';
-        feedback.textContent = 'Please enter an answer.';
+        feedback.textContent = 'Please select an answer.';
         feedback.style.display = 'block';
         return;
       }
 
-      const isCorrect = validateAnswer(userAnswer, step.accept);
+      const isCorrect = state.quiz.selectedAnswer === step.answerIndex;
+
+      // Disable all choice buttons
+      choicesContainer.querySelectorAll('.quiz-choice-btn').forEach(btn => {
+        btn.disabled = true;
+        const idx = parseInt(btn.dataset.index);
+        if (idx === step.answerIndex) {
+          btn.classList.add('correct');
+        } else if (idx === state.quiz.selectedAnswer && !isCorrect) {
+          btn.classList.add('wrong');
+        }
+      });
 
       if (isCorrect) {
         // Correct answer
         feedback.className = 'quiz-feedback success';
-        feedback.textContent = '✓ Correct!';
+        feedback.textContent = 'Correct!';
         feedback.style.display = 'block';
         state.quiz.stepStrikes = 0;
 
         submitBtn.disabled = true;
-        input.disabled = true;
 
         setTimeout(() => {
+          state.quiz.selectedAnswer = null;
           if (state.quiz.sIndex < totalSteps - 1) {
             // Next step
             state.quiz.sIndex++;
@@ -477,7 +594,7 @@
             state.quiz.sIndex = 0;
           }
           render();
-        }, 1000);
+        }, 1200);
       } else {
         // Wrong answer
         state.quiz.stepStrikes++;
@@ -486,36 +603,44 @@
           // 2 strikes on same step = restart
           feedback.className = 'quiz-feedback error restart';
           feedback.innerHTML = `
-            <span class="feedback-icon">✗</span>
+            <span class="feedback-icon">&#x2717;</span>
             <span class="feedback-text">2 incorrect attempts. Restarting quiz...</span>
-            <span class="feedback-answer">Correct answer: <strong>${step.a}</strong></span>
+            <span class="feedback-answer">Correct answer: <strong>${step.choices[step.answerIndex]}</strong></span>
           `;
           feedback.style.display = 'block';
 
           submitBtn.disabled = true;
-          input.disabled = true;
 
           setTimeout(() => {
             state.quiz.active = false;
             state.quiz.started = true;
             state.quiz.stepStrikes = 0;
+            state.quiz.selectedAnswer = null;
             render();
           }, 2500);
         } else {
-          // First strike
+          // First strike - allow retry
           feedback.className = 'quiz-feedback error';
-          feedback.textContent = '✗ Incorrect. Try again (1 attempt left).';
+          feedback.textContent = 'Incorrect. Try again (1 attempt left).';
           feedback.style.display = 'block';
-          input.value = '';
-          input.focus();
+
+          // Re-enable choices for retry
+          setTimeout(() => {
+            state.quiz.selectedAnswer = null;
+            choicesContainer.querySelectorAll('.quiz-choice-btn').forEach(btn => {
+              btn.disabled = false;
+              btn.classList.remove('selected', 'wrong');
+              // Keep correct answer hidden until they get it right or fail twice
+              btn.classList.remove('correct');
+            });
+            submitBtn.disabled = true;
+            feedback.style.display = 'none';
+          }, 1500);
         }
       }
     };
 
     submitBtn.addEventListener('click', checkAnswer);
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') checkAnswer();
-    });
 
     // Quit handler
     container.querySelector('#quiz-quit').addEventListener('click', () => {
@@ -523,6 +648,7 @@
         state.quiz.active = false;
         state.quiz.started = false;
         state.quiz.stepStrikes = 0;
+        state.quiz.selectedAnswer = null;
         render();
       }
     });
@@ -533,9 +659,11 @@
     const container = document.createElement('div');
     container.className = 'quiz-complete-screen';
 
+    const totalSteps = state.quiz.queue.reduce((sum, q) => sum + (q.quiz.steps ? q.quiz.steps.length : 0), 0);
+
     container.innerHTML = `
       <div class="complete-content">
-        <div class="complete-icon">🎉</div>
+        <div class="complete-icon">&#x1F389;</div>
         <h2 class="complete-title">Congratulations!</h2>
         <p class="complete-subtitle">You completed all questions in this set.</p>
 
@@ -545,7 +673,7 @@
             <span class="stat-label">Questions</span>
           </div>
           <div class="stat-item">
-            <span class="stat-value">${state.quiz.queue.reduce((sum, q) => sum + q.quiz.length, 0)}</span>
+            <span class="stat-value">${totalSteps}</span>
             <span class="stat-label">Steps Completed</span>
           </div>
         </div>
@@ -576,7 +704,7 @@
 
   // Start Quiz Function
   function startQuiz() {
-    let pool = state.data.filter(i => i.quiz && i.quiz.length > 0);
+    let pool = state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0);
 
     if (state.quiz.filter !== 'all') {
       pool = pool.filter(i => i.section === state.quiz.filter);
@@ -587,7 +715,7 @@
       return;
     }
 
-    // Shuffle questions (Fisher-Yates algorithm for better randomization)
+    // Fisher-Yates shuffle
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -597,37 +725,9 @@
     state.quiz.qIndex = 0;
     state.quiz.sIndex = 0;
     state.quiz.stepStrikes = 0;
+    state.quiz.selectedAnswer = null;
     state.quiz.active = true;
     render();
-  }
-
-  // Answer Validation (flexible matching)
-  function validateAnswer(userAnswer, acceptedAnswers) {
-    // Normalize user answer
-    const normalizedUser = userAnswer.toLowerCase().replace(/\s+/g, '').replace(/[×x]/g, '*');
-    const normalizedUserSpaced = userAnswer.toLowerCase().replace(/\s+/g, ' ').trim();
-
-    for (const accepted of acceptedAnswers) {
-      const normalizedAccepted = accepted.toLowerCase().replace(/\s+/g, '').replace(/[×x]/g, '*');
-      const normalizedAcceptedSpaced = accepted.toLowerCase().replace(/\s+/g, ' ').trim();
-
-      // Exact match (ignoring spaces)
-      if (normalizedUser === normalizedAccepted) return true;
-
-      // Match with spaces preserved
-      if (normalizedUserSpaced === normalizedAcceptedSpaced) return true;
-
-      // Allow common variations (e.g., 2^18 vs 2**18 vs 2 to the 18)
-      const variations = [
-        normalizedAccepted,
-        normalizedAccepted.replace(/\^/g, '**'),
-        normalizedAccepted.replace(/\*/g, '×'),
-      ];
-
-      if (variations.includes(normalizedUser)) return true;
-    }
-
-    return false;
   }
 
   // Theme Toggle
@@ -635,7 +735,7 @@
   if (themeToggle) {
     themeToggle.addEventListener('click', () => {
       document.body.classList.toggle('light-theme');
-      themeToggle.textContent = document.body.classList.contains('light-theme') ? '☾' : '☀︎';
+      themeToggle.textContent = document.body.classList.contains('light-theme') ? '\u263E' : '\u2600\uFE0E';
     });
   }
 
