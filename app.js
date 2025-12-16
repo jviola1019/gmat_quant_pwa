@@ -1,250 +1,644 @@
+/**
+ * GMAT Study PWA - Main Application
+ * Version 5.0 - Complete Overhaul
+ *
+ * Features:
+ * - Multi-step quiz with step-by-step answering
+ * - Quizlet-style flashcards with flip animation
+ * - Organized cheatsheet by category
+ * - 2 strikes on same step = quiz restart
+ */
 
-(function(){
+(function() {
+  'use strict';
+
+  // Application State
   const state = {
     view: 'cheatsheet',
     data: [],
     quiz: {
       active: false,
+      started: false,        // true after START is clicked (shows section selector)
       queue: [],
       qIndex: 0,
       sIndex: 0,
-      strikes: 0,
+      stepStrikes: 0,        // strikes for current step only
       filter: 'all'
     },
-    flashcardIndex: 0
+    flashcard: {
+      index: 0,
+      flipped: false
+    }
   };
 
+  // DOM Elements
   const main = document.getElementById('main');
   const tabs = document.querySelectorAll('.tab-btn');
 
-  async function init(){
+  // Initialize Application
+  async function init() {
     try {
       const res = await fetch('data/content.json');
-      state.data = (await res.json()).items;
+      const json = await res.json();
+      state.data = json.items || [];
       render();
-    } catch(e) { console.error(e); }
+    } catch(e) {
+      console.error('Failed to load content:', e);
+      main.innerHTML = '<div class="error-message">Failed to load content. Please refresh the page.</div>';
+    }
   }
 
+  // Tab Navigation
   tabs.forEach(btn => {
     btn.addEventListener('click', () => {
       tabs.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       state.view = btn.dataset.view;
+      // Reset states when switching tabs
+      if (state.view === 'quiz') {
+        state.quiz.active = false;
+        state.quiz.started = false;
+      }
+      if (state.view === 'flashcards') {
+        state.flashcard.flipped = false;
+      }
       render();
     });
   });
 
-  function render(){
+  // Main Render Function
+  function render() {
     main.innerHTML = '';
-    if(state.view === 'cheatsheet') renderCheatsheet();
-    else if(state.view === 'flashcards') renderFlashcards();
-    else if(state.view === 'quiz') renderQuiz();
+    switch(state.view) {
+      case 'cheatsheet':
+        renderCheatsheet();
+        break;
+      case 'flashcards':
+        renderFlashcards();
+        break;
+      case 'quiz':
+        renderQuiz();
+        break;
+    }
   }
 
-  // --- Cheatsheet ---
-  function renderCheatsheet(){
-    const list = document.createElement('div');
-    list.className = 'card-list';
-    state.data.forEach(item => {
-      if(!item.cheatsheet) return;
-      const card = document.createElement('div');
-      card.className = 'item-card';
-      card.innerHTML = `
-        <div class="item-header">
-          <h3 class="item-title">${item.cheatsheet.title}</h3>
-          <span class="item-tag">${item.tags[0]}</span>
-        </div>
-        <div class="item-body">${item.cheatsheet.body}</div>
-        ${item.cheatsheet.example ? `<div class="item-example">${item.cheatsheet.example}</div>` : ''}
-      `;
-      list.appendChild(card);
-    });
-    main.appendChild(list);
-  }
-
-  // --- Flashcards ---
-  function renderFlashcards(){
-    const deck = state.data.filter(i => i.flashcard);
-    if(!deck.length) return;
-    
-    // Circular bounds
-    if(state.flashcardIndex >= deck.length) state.flashcardIndex = 0;
-    if(state.flashcardIndex < 0) state.flashcardIndex = deck.length - 1;
-    
-    const item = deck[state.flashcardIndex];
-
+  // ═══════════════════════════════════════════════════════════════
+  // CHEATSHEET VIEW
+  // ═══════════════════════════════════════════════════════════════
+  function renderCheatsheet() {
     const container = document.createElement('div');
-    container.innerHTML = `
-      <div class="flashcard-container" id="fc-card">
-        <div class="flashcard-inner">
-          <div class="flashcard-face front">
-            <div class="fc-label">Question</div>
-            <div class="fc-text">${item.flashcard.front}</div>
+    container.className = 'cheatsheet-view';
+
+    // Group items by section
+    const sections = {
+      quant: { title: 'Quantitative Reasoning', items: [] },
+      verbal: { title: 'Verbal Reasoning', items: [] },
+      integrated: { title: 'Integrated Reasoning', items: [] }
+    };
+
+    state.data.forEach(item => {
+      if (item.cheatsheet && sections[item.section]) {
+        sections[item.section].items.push(item);
+      }
+    });
+
+    // Render each section
+    Object.entries(sections).forEach(([key, section]) => {
+      if (section.items.length === 0) return;
+
+      const sectionEl = document.createElement('div');
+      sectionEl.className = 'cheatsheet-section';
+      sectionEl.innerHTML = `<h2 class="section-title">${section.title}</h2>`;
+
+      const cardList = document.createElement('div');
+      cardList.className = 'card-list';
+
+      section.items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.innerHTML = `
+          <div class="item-header">
+            <h3 class="item-title">${item.cheatsheet.title}</h3>
+            <div class="tag-container">
+              ${item.tags.map(tag => `<span class="item-tag">${tag}</span>`).join('')}
+            </div>
           </div>
-          <div class="flashcard-face back">
-            <div class="fc-label">Answer</div>
-            <div class="fc-text">${item.flashcard.back}</div>
-          </div>
-        </div>
-      </div>
-      <div class="fc-controls">
-        <button class="circle-btn" id="fc-prev">←</button>
-        <button class="circle-btn" id="fc-next">→</button>
-      </div>
-      <div style="text-align:center; margin-top:10px; opacity:0.6; font-size:12px;">
-        ${state.flashcardIndex + 1} / ${deck.length}
-      </div>
-    `;
-    main.appendChild(container);
-
-    container.querySelector('#fc-card').addEventListener('click', function() {
-      this.classList.toggle('flipped');
-    });
-    container.querySelector('#fc-prev').addEventListener('click', (e) => {
-      e.stopPropagation(); state.flashcardIndex--; renderFlashcards();
-    });
-    container.querySelector('#fc-next').addEventListener('click', (e) => {
-      e.stopPropagation(); state.flashcardIndex++; renderFlashcards();
-    });
-  }
-
-  // --- Quiz ---
-  function renderQuiz(){
-    // 1. Start Screen
-    if(!state.quiz.active){
-      const menu = document.createElement('div');
-      menu.className = 'quiz-menu';
-      menu.innerHTML = `
-        <h1 style="font-family:var(--font-brand); font-weight:500;">Ready?</h1>
-        <p style="opacity:0.8; margin-bottom:30px;">Multi-step problems. 2 strikes = Restart.</p>
-        
-        <button class="big-start-btn" id="start-btn">START</button>
-        
-        <div class="quiz-filter-tabs">
-          <button class="filter-btn ${state.quiz.filter==='all'?'active':''}" data-f="all">All</button>
-          <button class="filter-btn ${state.quiz.filter==='quant'?'active':''}" data-f="quant">Quant</button>
-          <button class="filter-btn ${state.quiz.filter==='verbal'?'active':''}" data-f="verbal">Verbal</button>
-          <button class="filter-btn ${state.quiz.filter==='integrated'?'active':''}" data-f="integrated">Integrated</button>
-        </div>
-      `;
-      main.appendChild(menu);
-
-      menu.querySelectorAll('.filter-btn').forEach(b => {
-        b.addEventListener('click', () => { state.quiz.filter = b.dataset.f; renderQuiz(); });
+          <div class="item-body">${item.cheatsheet.body}</div>
+          ${item.cheatsheet.example ? `<div class="item-example"><strong>Example:</strong> ${item.cheatsheet.example}</div>` : ''}
+        `;
+        cardList.appendChild(card);
       });
 
-      menu.querySelector('#start-btn').addEventListener('click', startQuiz);
+      sectionEl.appendChild(cardList);
+      container.appendChild(sectionEl);
+    });
+
+    main.appendChild(container);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // FLASHCARDS VIEW - Quizlet Style
+  // ═══════════════════════════════════════════════════════════════
+  function renderFlashcards() {
+    const deck = state.data.filter(i => i.flashcard);
+    if (!deck.length) {
+      main.innerHTML = '<div class="empty-state">No flashcards available.</div>';
       return;
     }
 
-    // 2. Question View
-    const qItem = state.quiz.queue[state.quiz.qIndex];
-    if(!qItem) { finishQuiz(); return; }
-    
-    const step = qItem.quiz[state.quiz.sIndex];
-    const totalSteps = qItem.quiz.length;
-    
-    // Progress calculation
-    const qProg = (state.quiz.qIndex / state.quiz.queue.length);
-    const sProg = (state.quiz.sIndex / totalSteps) * (1 / state.quiz.queue.length);
-    const pct = (qProg + sProg) * 100;
+    // Circular bounds
+    if (state.flashcard.index >= deck.length) state.flashcard.index = 0;
+    if (state.flashcard.index < 0) state.flashcard.index = deck.length - 1;
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'quiz-container';
-    wrapper.innerHTML = `
-      <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
-      <div class="q-card">
-        <div class="q-meta">
-          <span>Question ${state.quiz.qIndex + 1} of ${state.quiz.queue.length}</span>
-          <span>Step ${state.quiz.sIndex + 1} / ${totalSteps}</span>
+    const item = deck[state.flashcard.index];
+
+    const container = document.createElement('div');
+    container.className = 'flashcard-view';
+
+    container.innerHTML = `
+      <div class="flashcard-progress">
+        <span class="fc-progress-text">${state.flashcard.index + 1} of ${deck.length}</span>
+        <div class="fc-progress-bar">
+          <div class="fc-progress-fill" style="width: ${((state.flashcard.index + 1) / deck.length) * 100}%"></div>
         </div>
-        <div class="q-text">${step.p}</div>
-        <input type="text" class="q-input" placeholder="Type answer..." autocomplete="off">
-        <div class="feedback" id="fb" style="display:none"></div>
-        <div class="action-row">
-          <button class="next-btn" id="submit">Check</button>
+      </div>
+
+      <div class="flashcard-wrapper">
+        <div class="flashcard-container ${state.flashcard.flipped ? 'flipped' : ''}" id="fc-card">
+          <div class="flashcard-inner">
+            <div class="flashcard-face front">
+              <div class="fc-label">Question</div>
+              <div class="fc-text">${item.flashcard.front}</div>
+              <div class="fc-hint">Tap to flip</div>
+            </div>
+            <div class="flashcard-face back">
+              <div class="fc-label">Answer</div>
+              <div class="fc-answer">${item.flashcard.back}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fc-controls">
+        <button class="fc-nav-btn" id="fc-prev" aria-label="Previous card">
+          <span class="fc-nav-icon">‹</span>
+          <span class="fc-nav-text">Previous</span>
+        </button>
+        <button class="fc-nav-btn" id="fc-next" aria-label="Next card">
+          <span class="fc-nav-text">Next</span>
+          <span class="fc-nav-icon">›</span>
+        </button>
+      </div>
+
+      <div class="fc-keyboard-hint">
+        Use ← → arrow keys to navigate, Space to flip
+      </div>
+    `;
+
+    main.appendChild(container);
+
+    // Card flip handler
+    const fcCard = container.querySelector('#fc-card');
+    fcCard.addEventListener('click', () => {
+      state.flashcard.flipped = !state.flashcard.flipped;
+      fcCard.classList.toggle('flipped', state.flashcard.flipped);
+    });
+
+    // Navigation handlers
+    container.querySelector('#fc-prev').addEventListener('click', (e) => {
+      e.stopPropagation();
+      state.flashcard.index--;
+      state.flashcard.flipped = false;
+      renderFlashcards();
+    });
+
+    container.querySelector('#fc-next').addEventListener('click', (e) => {
+      e.stopPropagation();
+      state.flashcard.index++;
+      state.flashcard.flipped = false;
+      renderFlashcards();
+    });
+
+    // Keyboard navigation
+    const handleKeydown = (e) => {
+      if (state.view !== 'flashcards') {
+        document.removeEventListener('keydown', handleKeydown);
+        return;
+      }
+      if (e.key === 'ArrowLeft') {
+        state.flashcard.index--;
+        state.flashcard.flipped = false;
+        renderFlashcards();
+      } else if (e.key === 'ArrowRight') {
+        state.flashcard.index++;
+        state.flashcard.flipped = false;
+        renderFlashcards();
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        state.flashcard.flipped = !state.flashcard.flipped;
+        fcCard.classList.toggle('flipped', state.flashcard.flipped);
+      }
+    };
+    document.addEventListener('keydown', handleKeydown);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // QUIZ VIEW - Multi-Step with Section Tabs
+  // ═══════════════════════════════════════════════════════════════
+  function renderQuiz() {
+    // Phase 1: Initial START screen (only large button)
+    if (!state.quiz.started) {
+      renderQuizStart();
+      return;
+    }
+
+    // Phase 2: Section selector (after START, before quiz begins)
+    if (!state.quiz.active) {
+      renderQuizSectionSelector();
+      return;
+    }
+
+    // Phase 3: Active quiz question
+    const qItem = state.quiz.queue[state.quiz.qIndex];
+    if (!qItem) {
+      renderQuizComplete();
+      return;
+    }
+
+    renderQuizQuestion(qItem);
+  }
+
+  // Quiz Phase 1: START Screen
+  function renderQuizStart() {
+    const container = document.createElement('div');
+    container.className = 'quiz-start-screen';
+
+    container.innerHTML = `
+      <div class="quiz-hero">
+        <img src="icons/new_logo.png" alt="GMAT Logo" class="quiz-logo" />
+        <h1 class="quiz-title">GMAT Quiz</h1>
+        <p class="quiz-subtitle">Multi-step problem solving</p>
+      </div>
+
+      <button class="quiz-start-btn" id="quiz-start">
+        <span class="start-btn-text">START</span>
+        <span class="start-btn-icon">→</span>
+      </button>
+
+      <div class="quiz-rules">
+        <div class="rule-item">
+          <span class="rule-icon">📝</span>
+          <span class="rule-text">Step-by-step questions</span>
+        </div>
+        <div class="rule-item">
+          <span class="rule-icon">⚠️</span>
+          <span class="rule-text">2 wrong answers on a step = restart</span>
+        </div>
+        <div class="rule-item">
+          <span class="rule-icon">🎯</span>
+          <span class="rule-text">Complete all steps to finish</span>
         </div>
       </div>
     `;
-    main.appendChild(wrapper);
 
-    const input = wrapper.querySelector('input');
-    const btn = wrapper.querySelector('#submit');
-    const fb = wrapper.querySelector('#fb');
-    
-    setTimeout(() => input.focus(), 50);
+    main.appendChild(container);
 
-    const check = () => {
-      const val = input.value.trim().toLowerCase().replace(/\s/g, '');
-      const valRaw = input.value.trim().toLowerCase();
-      
-      const correctList = step.accept.map(a => a.toLowerCase().replace(/\s/g, ''));
-      const isCorrect = correctList.includes(val) || step.accept.some(a => a.toLowerCase() === valRaw);
+    container.querySelector('#quiz-start').addEventListener('click', () => {
+      state.quiz.started = true;
+      render();
+    });
+  }
 
-      if(isCorrect){
-        fb.style.display = 'flex';
-        fb.className = 'feedback success';
-        fb.textContent = 'Correct!';
-        state.quiz.strikes = 0;
+  // Quiz Phase 2: Section Selector
+  function renderQuizSectionSelector() {
+    const container = document.createElement('div');
+    container.className = 'quiz-section-selector';
+
+    // Count questions per section
+    const counts = {
+      all: state.data.filter(i => i.quiz && i.quiz.length > 0).length,
+      quant: state.data.filter(i => i.quiz && i.quiz.length > 0 && i.section === 'quant').length,
+      verbal: state.data.filter(i => i.quiz && i.quiz.length > 0 && i.section === 'verbal').length,
+      integrated: state.data.filter(i => i.quiz && i.quiz.length > 0 && i.section === 'integrated').length
+    };
+
+    container.innerHTML = `
+      <h2 class="section-selector-title">Choose a Section</h2>
+      <p class="section-selector-subtitle">Select the question category you want to practice</p>
+
+      <div class="section-tabs">
+        <button class="section-tab ${state.quiz.filter === 'all' ? 'active' : ''}" data-section="all">
+          <span class="section-tab-name">All</span>
+          <span class="section-tab-count">${counts.all} questions</span>
+        </button>
+        <button class="section-tab ${state.quiz.filter === 'quant' ? 'active' : ''}" data-section="quant">
+          <span class="section-tab-name">Quantitative</span>
+          <span class="section-tab-count">${counts.quant} questions</span>
+        </button>
+        <button class="section-tab ${state.quiz.filter === 'verbal' ? 'active' : ''}" data-section="verbal">
+          <span class="section-tab-name">Verbal</span>
+          <span class="section-tab-count">${counts.verbal} questions</span>
+        </button>
+        <button class="section-tab ${state.quiz.filter === 'integrated' ? 'active' : ''}" data-section="integrated">
+          <span class="section-tab-name">Integrated</span>
+          <span class="section-tab-count">${counts.integrated} questions</span>
+        </button>
+      </div>
+
+      <button class="quiz-begin-btn" id="quiz-begin">
+        Begin Quiz
+      </button>
+
+      <button class="quiz-back-btn" id="quiz-back">
+        ← Back
+      </button>
+    `;
+
+    main.appendChild(container);
+
+    // Section tab handlers
+    container.querySelectorAll('.section-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        container.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        state.quiz.filter = tab.dataset.section;
+      });
+    });
+
+    // Begin quiz handler
+    container.querySelector('#quiz-begin').addEventListener('click', startQuiz);
+
+    // Back button handler
+    container.querySelector('#quiz-back').addEventListener('click', () => {
+      state.quiz.started = false;
+      render();
+    });
+  }
+
+  // Quiz Phase 3: Active Question
+  function renderQuizQuestion(qItem) {
+    const step = qItem.quiz[state.quiz.sIndex];
+    const totalSteps = qItem.quiz.length;
+    const totalQuestions = state.quiz.queue.length;
+
+    // Progress calculation
+    const progressPct = ((state.quiz.qIndex + (state.quiz.sIndex / totalSteps)) / totalQuestions) * 100;
+
+    const container = document.createElement('div');
+    container.className = 'quiz-question-view';
+
+    container.innerHTML = `
+      <div class="quiz-header">
+        <div class="quiz-progress-bar">
+          <div class="quiz-progress-fill" style="width: ${progressPct}%"></div>
+        </div>
+        <div class="quiz-meta">
+          <span class="quiz-question-num">Question ${state.quiz.qIndex + 1} of ${totalQuestions}</span>
+          <span class="quiz-step-num">Step ${state.quiz.sIndex + 1} of ${totalSteps}</span>
+        </div>
+      </div>
+
+      <div class="quiz-card">
+        <div class="quiz-step-indicator">
+          ${Array.from({ length: totalSteps }, (_, i) => `
+            <div class="step-dot ${i < state.quiz.sIndex ? 'completed' : i === state.quiz.sIndex ? 'active' : ''}">
+              ${i < state.quiz.sIndex ? '✓' : i + 1}
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="quiz-question-text">${step.p}</div>
+
+        <div class="quiz-input-wrapper">
+          <input
+            type="text"
+            class="quiz-input"
+            id="quiz-answer"
+            placeholder="Type your answer..."
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+          />
+          <div class="quiz-strike-indicator">
+            ${state.quiz.stepStrikes > 0 ? `<span class="strike-warning">${state.quiz.stepStrikes}/2 attempts</span>` : ''}
+          </div>
+        </div>
+
+        <div class="quiz-feedback" id="quiz-feedback"></div>
+
+        <button class="quiz-submit-btn" id="quiz-submit">
+          Check Answer
+        </button>
+      </div>
+
+      <button class="quiz-quit-btn" id="quiz-quit">
+        Quit Quiz
+      </button>
+    `;
+
+    main.appendChild(container);
+
+    const input = container.querySelector('#quiz-answer');
+    const submitBtn = container.querySelector('#quiz-submit');
+    const feedback = container.querySelector('#quiz-feedback');
+
+    // Focus input
+    setTimeout(() => input.focus(), 100);
+
+    // Submit handler
+    const checkAnswer = () => {
+      const userAnswer = input.value.trim();
+      if (!userAnswer) {
+        feedback.className = 'quiz-feedback error';
+        feedback.textContent = 'Please enter an answer.';
+        feedback.style.display = 'block';
+        return;
+      }
+
+      const isCorrect = validateAnswer(userAnswer, step.accept);
+
+      if (isCorrect) {
+        // Correct answer
+        feedback.className = 'quiz-feedback success';
+        feedback.textContent = '✓ Correct!';
+        feedback.style.display = 'block';
+        state.quiz.stepStrikes = 0;
+
+        submitBtn.disabled = true;
+        input.disabled = true;
+
         setTimeout(() => {
-          if(state.quiz.sIndex < totalSteps - 1) {
+          if (state.quiz.sIndex < totalSteps - 1) {
+            // Next step
             state.quiz.sIndex++;
-            renderQuiz();
           } else {
+            // Next question
             state.quiz.qIndex++;
             state.quiz.sIndex = 0;
-            renderQuiz();
           }
-        }, 800);
+          render();
+        }, 1000);
       } else {
-        state.quiz.strikes++;
-        fb.style.display = 'flex';
-        fb.className = 'feedback error';
-        if(state.quiz.strikes >= 2){
-           fb.textContent = '2 Strikes! Restarting quiz...';
-           setTimeout(startQuiz, 1500);
+        // Wrong answer
+        state.quiz.stepStrikes++;
+
+        if (state.quiz.stepStrikes >= 2) {
+          // 2 strikes on same step = restart
+          feedback.className = 'quiz-feedback error restart';
+          feedback.innerHTML = `
+            <span class="feedback-icon">✗</span>
+            <span class="feedback-text">2 incorrect attempts. Restarting quiz...</span>
+            <span class="feedback-answer">Correct answer: <strong>${step.a}</strong></span>
+          `;
+          feedback.style.display = 'block';
+
+          submitBtn.disabled = true;
+          input.disabled = true;
+
+          setTimeout(() => {
+            state.quiz.active = false;
+            state.quiz.started = true;
+            state.quiz.stepStrikes = 0;
+            render();
+          }, 2500);
         } else {
-           fb.textContent = 'Incorrect. Try again (1 strike left).';
+          // First strike
+          feedback.className = 'quiz-feedback error';
+          feedback.textContent = '✗ Incorrect. Try again (1 attempt left).';
+          feedback.style.display = 'block';
+          input.value = '';
+          input.focus();
         }
       }
     };
 
-    btn.addEventListener('click', check);
-    input.addEventListener('keydown', e => { if(e.key === 'Enter') check(); });
+    submitBtn.addEventListener('click', checkAnswer);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkAnswer();
+    });
+
+    // Quit handler
+    container.querySelector('#quiz-quit').addEventListener('click', () => {
+      if (confirm('Are you sure you want to quit the quiz?')) {
+        state.quiz.active = false;
+        state.quiz.started = false;
+        state.quiz.stepStrikes = 0;
+        render();
+      }
+    });
   }
 
-  function startQuiz(){
+  // Quiz Completion Screen
+  function renderQuizComplete() {
+    const container = document.createElement('div');
+    container.className = 'quiz-complete-screen';
+
+    container.innerHTML = `
+      <div class="complete-content">
+        <div class="complete-icon">🎉</div>
+        <h2 class="complete-title">Congratulations!</h2>
+        <p class="complete-subtitle">You completed all questions in this set.</p>
+
+        <div class="complete-stats">
+          <div class="stat-item">
+            <span class="stat-value">${state.quiz.queue.length}</span>
+            <span class="stat-label">Questions</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">${state.quiz.queue.reduce((sum, q) => sum + q.quiz.length, 0)}</span>
+            <span class="stat-label">Steps Completed</span>
+          </div>
+        </div>
+
+        <div class="complete-actions">
+          <button class="complete-btn primary" id="restart-quiz">
+            Try Again
+          </button>
+          <button class="complete-btn secondary" id="back-to-start">
+            Choose Different Section
+          </button>
+        </div>
+      </div>
+    `;
+
+    main.appendChild(container);
+
+    container.querySelector('#restart-quiz').addEventListener('click', () => {
+      startQuiz();
+    });
+
+    container.querySelector('#back-to-start').addEventListener('click', () => {
+      state.quiz.active = false;
+      state.quiz.started = true;
+      render();
+    });
+  }
+
+  // Start Quiz Function
+  function startQuiz() {
     let pool = state.data.filter(i => i.quiz && i.quiz.length > 0);
-    if(state.quiz.filter !== 'all') pool = pool.filter(i => i.section === state.quiz.filter);
-    
-    // Shuffle
-    pool.sort(() => Math.random() - 0.5);
-    
+
+    if (state.quiz.filter !== 'all') {
+      pool = pool.filter(i => i.section === state.quiz.filter);
+    }
+
+    if (pool.length === 0) {
+      alert('No questions available for this section.');
+      return;
+    }
+
+    // Shuffle questions (Fisher-Yates algorithm for better randomization)
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+
     state.quiz.queue = pool;
     state.quiz.qIndex = 0;
     state.quiz.sIndex = 0;
-    state.quiz.strikes = 0;
+    state.quiz.stepStrikes = 0;
     state.quiz.active = true;
-    renderQuiz();
+    render();
   }
 
-  function finishQuiz(){
-    state.quiz.active = false;
-    main.innerHTML = `
-      <div class="quiz-menu">
-        <h1>Great Job!</h1>
-        <p>You completed the set.</p>
-        <button class="big-start-btn" onclick="location.reload()">Done</button>
-      </div>
-    `;
+  // Answer Validation (flexible matching)
+  function validateAnswer(userAnswer, acceptedAnswers) {
+    // Normalize user answer
+    const normalizedUser = userAnswer.toLowerCase().replace(/\s+/g, '').replace(/[×x]/g, '*');
+    const normalizedUserSpaced = userAnswer.toLowerCase().replace(/\s+/g, ' ').trim();
+
+    for (const accepted of acceptedAnswers) {
+      const normalizedAccepted = accepted.toLowerCase().replace(/\s+/g, '').replace(/[×x]/g, '*');
+      const normalizedAcceptedSpaced = accepted.toLowerCase().replace(/\s+/g, ' ').trim();
+
+      // Exact match (ignoring spaces)
+      if (normalizedUser === normalizedAccepted) return true;
+
+      // Match with spaces preserved
+      if (normalizedUserSpaced === normalizedAcceptedSpaced) return true;
+
+      // Allow common variations (e.g., 2^18 vs 2**18 vs 2 to the 18)
+      const variations = [
+        normalizedAccepted,
+        normalizedAccepted.replace(/\^/g, '**'),
+        normalizedAccepted.replace(/\*/g, '×'),
+      ];
+
+      if (variations.includes(normalizedUser)) return true;
+    }
+
+    return false;
   }
 
-  // Init
-  init();
-  
   // Theme Toggle
-  document.getElementById('themeToggle').addEventListener('click', () => {
-     // For now just logs, in real app toggles classes
-     console.log('Toggle Theme');
-  });
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('light-theme');
+      themeToggle.textContent = document.body.classList.contains('light-theme') ? '☾' : '☀︎';
+    });
+  }
+
+  // Initialize
+  init();
 })();
