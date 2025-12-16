@@ -1,22 +1,12 @@
 {
-  "name": "GMAT Study PWA",
-  "short_name": "GMAT Study",
+  "name": "GMAT Study",
+  "short_name": "GMAT",
   "start_url": "./index.html",
-  "scope": "./",
   "display": "standalone",
-  "background_color": "#0b0e24",
-  "theme_color": "#0b0e24",
-  "description": "Modern offline‑first GMAT study app with cheatsheet, flashcards and multi‑step quizzes. Study notes have been folded into the cheatsheet.",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
-    {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }

@@ -2,184 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <!-- Updated theme colors for a lighter, more corporate look -->
-  <meta name="theme-color" content="#f4f6fb" />
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icons/icon-192.png" sizes="192x192">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="Interactive GMAT Study App with Multi-step Quizzes">
   <title>GMAT Study PWA</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-  <div class="app" id="app">
-    <header class="top">
-      <div class="brand">
-        <div class="kicker">GMAT • OFFLINE PWA</div>
-        <h1 class="title">Study Guide</h1>
-        <p class="subtitle">
-          A lightweight offline‑first study guide with dark mode, futuristic visuals and step‑by‑step quizzes.
-          <span class="pill" id="offlinePill" aria-live="polite">online</span>
-        </p>
-      </div>
+  <div id="canvas-container"></div>
 
-      <div class="topActions">
-        <button class="btn ghost" id="installBtn" hidden>Install</button>
-        <button class="btn" id="cmdBtn" aria-label="Open command palette">⌘K</button>
-        <!-- Theme toggle button switches between light and dark modes -->
-        <button class="btn" id="themeToggle" aria-label="Toggle dark mode">☀︎</button>
-        <button class="btn" id="addBtn" aria-label="Add a new card">＋ Add</button>
+  <div class="app">
+    <header class="header">
+      <div class="logo-area">
+        <img src="icons/new_logo.png" alt="GMAT Logo" class="logo-img" />
+        <h1 class="app-title">GMAT Prep</h1>
       </div>
+      <button id="themeToggle" class="icon-btn" aria-label="Toggle Theme">☀︎</button>
     </header>
 
-    <!-- Primary navigation. Additional GMAT sections are provided for future expansion. -->
-    <nav class="nav">
-      <button class="navItem" data-view="cheatsheet" aria-current="page"><span class="ico">▣</span><span>Cheatsheet</span></button>
-      <!-- Patterns view removed; patterns content has been merged into the cheatsheet. -->
-      <button class="navItem" data-view="flashcards"><span class="ico">⟐</span><span>Flashcards</span></button>
-      <button class="navItem" data-view="quiz"><span class="ico">▶</span><span>Quiz</span></button>
-      <!-- placeholders for other GMAT sections; currently empty but selectable -->
-      <button class="navItem" data-view="verbal"><span class="ico">V</span><span>Verbal</span></button>
-      <button class="navItem" data-view="integrated"><span class="ico">I</span><span>Integrated</span></button>
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-view="cheatsheet">Cheatsheet</button>
+      <button class="tab-btn" data-view="flashcards">Flashcards</button>
+      <button class="tab-btn" data-view="quiz">Quiz</button>
     </nav>
 
-    <main class="main">
-      <section class="panel">
-        <div class="toolbar">
-          <div class="search">
-            <span class="mag">⌕</span>
-            <input id="searchInput" type="search" inputmode="search" placeholder="Search…" />
-            <button class="mini" id="clearSearch" aria-label="Clear search" title="Clear">×</button>
-          </div>
-
-          <div class="toggles">
-            <button class="mini" id="collapseAll">Collapse</button>
-            <button class="mini" id="expandAll">Expand</button>
-            <button class="mini" id="exportBtn">Export</button>
-            <label class="mini file">Import<input id="importFile" type="file" accept="application/json" /></label>
-          </div>
-        </div>
-
-        <div class="contentHead">
-          <div>
-            <div class="h2" id="viewTitle">Cheatsheet</div>
-            <div class="h3" id="viewSubtitle">1‑page rules you can actually reuse</div>
-          </div>
-
-          <div class="stats">
-            <div class="stat"><div class="k" id="statCount">0</div><div class="l">items</div></div>
-            <div class="stat"><div class="k" id="statDone">0</div><div class="l">mastered</div></div>
-          </div>
-        </div>
-
-        <div class="list" id="list"></div>
-      </section>
-
-      <aside class="side">
-        <section class="panel compact">
-          <div class="sideTitle">Quick checklist</div>
-          <div class="sideBody">
-            <div class="chip">Baseline identified?</div>
-            <div class="chip">Words → multipliers?</div>
-            <div class="chip">Any cancellation?</div>
-            <div class="chip">“Could be” → test max/min?</div>
-            <div class="chip">Percent → ÷100?</div>
-          </div>
-        </section>
-
-        <section class="panel compact">
-          <div class="sideTitle">Study sprint</div>
-          <div class="sideBody">
-            <div class="timer">
-              <div class="clock" id="clock">05:00</div>
-              <div class="timerBtns">
-                <button class="mini" id="tStart">Start</button>
-                <button class="mini" id="tPause">Pause</button>
-                <button class="mini" id="tReset">Reset</button>
-              </div>
-              <div class="muted">Pro tip: do 5 minutes focused, then 30 seconds to review your reasoning.</div>
-            </div>
-          </div>
-        </section>
-
-        <section class="panel compact">
-          <div class="sideTitle">How to add more later</div>
-          <div class="sideBody muted">
-            Use <b>＋ Add</b> to create cards, or edit <code>data/content.json</code>.
-            Everything is plain JSON + small components in <code>app.js</code>.
-          </div>
-        </section>
-      </aside>
-    </main>
-
-    <footer class="foot">
-      <span>Offline‑first caching via Service Worker.</span>
-      <span class="sep">·</span>
-      <span>Keyboard: <b>/</b> search, <b>Ctrl/⌘K</b> palette, <b>N</b> add.</span>
-    </footer>
+    <main class="main-content" id="main">
+      </main>
   </div>
 
-  <!-- Command palette modal -->
-  <div class="modal" id="cmdModal" aria-hidden="true">
-    <div class="modalCard" role="dialog" aria-modal="true" aria-label="Command palette">
-      <div class="modalTop">
-        <div class="modalTitle">Command Palette</div>
-        <button class="mini" id="cmdClose">Esc</button>
-      </div>
-      <div class="cmdInput">
-        <span class="mag">⌕</span>
-        <input id="cmdInput" type="search" placeholder="Type a command or search… (ex: quiz, add, export)" />
-      </div>
-      <div class="cmdList" id="cmdList"></div>
-    </div>
-  </div>
-
-  <!-- Add/Edit item modal -->
-  <div class="modal" id="editModal" aria-hidden="true">
-    <div class="modalCard" role="dialog" aria-modal="true" aria-label="Add or edit item">
-      <div class="modalTop">
-        <div class="modalTitle" id="editTitle">Add item</div>
-        <button class="mini" id="editClose">Close</button>
-      </div>
-
-      <form id="editForm" class="form">
-        <div class="row">
-          <label>Section
-            <select id="fSection">
-              <option value="cheatsheet">Cheatsheet</option>
-              <option value="flashcards">Flashcards</option>
-            </select>
-          </label>
-          <label>Tag
-            <input id="fTag" placeholder="ex: range, digits, linear" />
-          </label>
-        </div>
-
-        <label>Title / Question
-          <input id="fTitle" required placeholder="Short, memorable" />
-        </label>
-
-        <label>Body / Answer
-          <textarea id="fBody" required placeholder="Write the rule, pattern, or answer…"></textarea>
-        </label>
-
-        <label>Example (optional)
-          <textarea id="fExample" placeholder="Add one example if helpful…"></textarea>
-        </label>
-
-        <div class="row end">
-          <button type="button" class="btn ghost" id="deleteBtn" hidden>Delete</button>
-          <button type="submit" class="btn">Save</button>
-        </div>
-
-        <input type="hidden" id="fId" />
-      </form>
-    </div>
-  </div>
-
-  <!-- Link to our script -->
+  <script src="bg.js" defer></script>
   <script src="app.js" defer></script>
+  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('sw.js').catch(console.error);
+    }
+  </script>
 </body>
 </html>
