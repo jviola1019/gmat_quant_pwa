@@ -51,6 +51,35 @@
     quizSection: 'quant'
   };
 
+  // Theme management. Use localStorage to persist user preference. Dark mode
+  // variables are defined in styles.css. The toggle button text is updated
+  // based on the current mode (sun for light, moon for dark).
+  function applyTheme(theme){
+    if(theme === 'dark'){
+      document.documentElement.setAttribute('data-theme','dark');
+      $('#themeToggle').textContent = '☾';
+    }else{
+      document.documentElement.removeAttribute('data-theme');
+      $('#themeToggle').textContent = '☀︎';
+    }
+    localStorage.setItem('gmat_theme', theme);
+  }
+  function initTheme(){
+    const stored = localStorage.getItem('gmat_theme');
+    if(stored){
+      applyTheme(stored);
+    }else{
+      // Default to light unless user prefers dark mode via media query
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      applyTheme(prefersDark ? 'dark' : 'light');
+    }
+  }
+  onTap($('#themeToggle'), () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+
   // Persist and load user data (mastery flags and user‑created items).
   function loadUserData(){
     try{
@@ -313,6 +342,15 @@
       if(/Two month ranges/.test(qbank[i].p)){
         qbank[i] = generateRangeQuestion();
       }
+      // Randomise exponents in k‑digit questions. Look for a prompt like
+      // “4^9 × 5^17” and swap the exponents for new random values. The
+      // underlying strategy (rewrite 4^n as 2^(2n) and pair with 5^n)
+      // doesn’t change, so the correct option remains the same.
+      if(/4\^\d+.*5\^\d+/.test(qbank[i].p)){
+        const m = 4 + Math.floor(Math.random()*9); // exponent between 4 and 12
+        const n = m + Math.floor(Math.random()*5); // n >= m for variety
+        qbank[i].p = `You see 4^${m} × 5^${n}. What’s the fastest plan?`;
+      }
       // Ensure each question has a hint; default to first sentence of "why".
       if(!qbank[i].hint){
         qbank[i].hint = (qbank[i].why || '').split(/[.!?]/)[0] + '.';
@@ -377,6 +415,9 @@
     });
 
     // Render a single question. Handles attempts and hint display.
+    // Flag to prevent skipping questions. The next button will only
+    // advance when a selection has been made (answered === true).
+    let answered = false;
     function paint(){
       if(!qbank.length){
         qPrompt.textContent = 'No quiz questions found.';
@@ -384,6 +425,7 @@
         qWhy.textContent='';
         return;
       }
+      answered = false;
       const q = qbank[quizIdx];
       let attempts = 0;
       qNumEl.textContent = String(quizIdx+1);
@@ -400,6 +442,7 @@
         onTap(b, ()=>{
           // disable all buttons once one is tapped
           Array.from(qOpts.querySelectorAll('button')).forEach(x=>x.disabled=true);
+          answered = true;
           if(i === q.correct){
             // Award full point on first try, half on second try
             quizScore += attempts === 0 ? 1 : 0.5;
@@ -415,6 +458,7 @@
                 if(idx !== i) btn.disabled = false;
               });
               attempts = 1;
+              answered = false; // still not answered until correct or second attempt
               return;
             }
             // Second wrong attempt – show explanation and increment wrong counter
@@ -433,7 +477,12 @@
 
     // Start resets everything and shows the first question
     onTap(qStart, ()=>{ quizIdx=0; quizScore=0; state.quizWrong=0; paint(); });
-    onTap(qNext, ()=>{ if(!qbank.length) return; quizIdx=(quizIdx+1)%qbank.length; paint(); });
+    onTap(qNext, ()=>{
+      // Do not advance unless the current question has been answered
+      if(!qbank.length || !answered) return;
+      quizIdx=(quizIdx+1)%qbank.length;
+      paint();
+    });
     onTap(qReset, ()=>{ quizIdx=0; quizScore=0; state.quizWrong=0; paint(); });
 
     statCount.textContent = String(qbank.length);
@@ -592,7 +641,7 @@
       deleteBtn.hidden = false;
     }else{
       editTitle.textContent = 'Add item';
-      fSection.value = (['cheatsheet','patterns','flashcards'].includes(state.view) ? state.view : 'cheatsheet');
+      fSection.value = (['cheatsheet','flashcards'].includes(state.view) ? state.view : 'cheatsheet');
       fTag.value = '';
       fTitle.value = '';
       fBody.value = '';
@@ -615,7 +664,7 @@
     const example = (fExample.value||'').trim();
     const existingId = (fId.value||'').trim();
     const id = existingId || ('u_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7));
-    const type = (section === 'flashcards') ? 'flashcard' : (section === 'patterns' ? 'pattern' : 'rule');
+    const type = (section === 'flashcards') ? 'flashcard' : 'rule';
     const item = (type==='flashcard') ? { id, type, tag, q:title, a:body, example } : { id, type, tag, title, body, example };
     const map = state.user.itemsBySection || {};
     map[section] = map[section] || [];
@@ -655,7 +704,6 @@
   onTap($('#cmdClose'), closeCmd);
   const commands = [
     { label:'Go: Cheatsheet', desc:'Open the cheatsheet view', act:()=>setView('cheatsheet') },
-    { label:'Go: Patterns', desc:'Open patterns view', act:()=>setView('patterns') },
     { label:'Go: Flashcards', desc:'Open flashcards view', act:()=>setView('flashcards') },
     { label:'Go: Quiz', desc:'Open quiz mode', act:()=>setView('quiz') },
     { label:'Go: Notes', desc:'Open study notes', act:()=>setView('notes') },
@@ -710,6 +758,7 @@
   // --------------------- Initialise ---------------------
   (async function init(){
     updateOnline();
+    initTheme();
     drawClock();
     await loadContent();
     setView('cheatsheet');

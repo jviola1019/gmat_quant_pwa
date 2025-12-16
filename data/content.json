@@ -69,62 +69,6 @@
       ]
     },
     {
-      "id": "patterns",
-      "title": "Patterns",
-      "subtitle": "What these question types are testing",
-      "items": [
-        {
-          "id": "p-kdigit",
-          "type": "pattern",
-          "tag": "digits",
-          "title": "k‑digit via pairing 2s & 5s",
-          "body": "Rewrite 4^n as 2^(2n). Pair 2^k·5^k = 10^k. Try to land on (small number)·10^k, then digits = k+1."
-        },
-        {
-          "id": "p-range",
-          "type": "pattern",
-          "tag": "range",
-          "title": "Smallest combined range = overlap trick",
-          "body": "Nest the smaller interval inside the larger interval. The total range can be as small as the larger range."
-        },
-        {
-          "id": "p-mpg",
-          "type": "pattern",
-          "tag": "linear",
-          "title": "Baseline ± rate×deviation (mpg)",
-          "body": "Start at baseline. Apply each penalty using the correct deviation. ‘Over 40’ forces (S−40)."
-        },
-        {
-          "id": "p-candles",
-          "type": "pattern",
-          "tag": "decay",
-          "title": "Candles: constant‑rate burn",
-          "body": "Write remaining height as a fraction of original: A = H(1−m/t), B = H(1−m/2t). Cancel H and solve."
-        },
-        {
-          "id": "p-tinypercent",
-          "type": "pattern",
-          "tag": "sci",
-          "title": "Tiny percent = extra ÷100",
-          "body": "Convert percent to decimal first. 0.0003% = 0.000003 = 3×10⁻⁶ (percent adds an extra ÷100)."
-        },
-        {
-          "id": "p-couldbe",
-          "type": "pattern",
-          "tag": "ineq",
-          "title": "‘Could be > 1’ with an upper bound",
-          "body": "Use the maximum allowed x to see if the expression can exceed 1. Watch for cancellations like (1/x)·x."
-        },
-        {
-          "id": "p-range2",
-          "type": "pattern",
-          "tag": "build",
-          "title": "Range + total = construction",
-          "body": "Range 2 means only three consecutive values {n, n+1, n+2} are possible. Build one valid distribution that hits the total."
-        }
-      ]
-    },
-    {
       "id": "flashcards",
       "title": "Flashcards",
       "subtitle": "Tap to reveal (spaced repetition friendly)",

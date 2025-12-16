@@ -28,6 +28,8 @@
       <div class="topActions">
         <button class="btn ghost" id="installBtn" hidden>Install</button>
         <button class="btn" id="cmdBtn" aria-label="Open command palette">⌘K</button>
+        <!-- Theme toggle button switches between light and dark modes -->
+        <button class="btn" id="themeToggle" aria-label="Toggle dark mode">☀︎</button>
         <button class="btn" id="addBtn" aria-label="Add a new card">＋ Add</button>
       </div>
     </header>
@@ -35,7 +37,7 @@
     <!-- Primary navigation. Additional GMAT sections are provided for future expansion. -->
     <nav class="nav">
       <button class="navItem" data-view="cheatsheet" aria-current="page"><span class="ico">▣</span><span>Cheatsheet</span></button>
-      <button class="navItem" data-view="patterns"><span class="ico">≋</span><span>Patterns</span></button>
+      <!-- Patterns view removed; patterns content has been merged into the cheatsheet. -->
       <button class="navItem" data-view="flashcards"><span class="ico">⟐</span><span>Flashcards</span></button>
       <button class="navItem" data-view="quiz"><span class="ico">▶</span><span>Quiz</span></button>
       <button class="navItem" data-view="notes"><span class="ico">✎</span><span>Notes</span></button>
@@ -148,7 +150,6 @@
           <label>Section
             <select id="fSection">
               <option value="cheatsheet">Cheatsheet</option>
-              <option value="patterns">Patterns</option>
               <option value="flashcards">Flashcards</option>
             </select>
           </label>

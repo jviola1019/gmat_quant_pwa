@@ -25,6 +25,101 @@
   --shadow: 0 4px 12px rgba(0,0,0,.06);
 }
 
+/* Dark theme variables and overrides. These values are inspired by modern UI
+   design guidance that recommends using CSS variables to manage light and dark
+   modes【517566158179139†L160-L172】. When the data-theme="dark" attribute is
+   present on the root element (see app.js), these variables override the
+   default palette to create a high‑contrast, futuristic look. */
+[data-theme="dark"]{
+  /* Dark background gradient */
+  --bg0: #0b0e24;
+  --bg1: #111a36;
+  /* Light text on dark backgrounds */
+  --text: #cdd4e4;
+  --muted: #7a89b2;
+  /* Light borders and lines */
+  --line: rgba(255,255,255,.18);
+  --line2: rgba(255,255,255,.1);
+  /* Deeper shadows for elevated panels */
+  --shadow: 0 6px 18px rgba(0,0,0,.5);
+}
+
+/* Component overrides for dark mode. Using attribute selectors keeps
+   light and dark styles logically separated. */
+[data-theme="dark"] body{
+  background: linear-gradient(180deg, var(--bg0), var(--bg1));
+  color: var(--text);
+}
+[data-theme="dark"] .nav{
+  background: rgba(255,255,255,.08);
+  border-color: var(--line);
+}
+[data-theme="dark"] .navItem{
+  color: var(--muted);
+}
+[data-theme="dark"] .navItem:hover{
+  background: rgba(255,255,255,.05);
+}
+[data-theme="dark"] .navItem[aria-current="page"]{
+  border-color: rgba(78,115,235,.45);
+  background: rgba(78,115,235,.25);
+  color: var(--text);
+}
+[data-theme="dark"] .panel{
+  background: rgba(255,255,255,.05);
+  border-color: var(--line);
+  box-shadow: var(--shadow);
+}
+[data-theme="dark"] .panel.compact{
+  background: rgba(255,255,255,.03);
+}
+[data-theme="dark"] .toolbar,
+[data-theme="dark"] .contentHead,
+[data-theme="dark"] .sideTitle,
+[data-theme="dark"] .modalTop{
+  background: rgba(255,255,255,.04);
+  border-color: var(--line2);
+}
+[data-theme="dark"] .search{
+  background: rgba(255,255,255,.07);
+  border-color: var(--line);
+}
+[data-theme="dark"] .search input::placeholder{
+  color: var(--muted);
+}
+[data-theme="dark"] .mini,
+[data-theme="dark"] .badge,
+[data-theme="dark"] .stat,
+[data-theme="dark"] .kbtn,
+[data-theme="dark"] .chip,
+[data-theme="dark"] .cmd,
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select{
+  background: rgba(255,255,255,.07);
+  color: var(--text);
+  border-color: var(--line);
+}
+[data-theme="dark"] .mini.file::before{
+  color: var(--text);
+}
+[data-theme="dark"] .itemBody,
+[data-theme="dark"] .cmdInput{
+  background: rgba(255,255,255,.05);
+}
+[data-theme="dark"] .itemTop{
+  background: rgba(255,255,255,.05);
+}
+[data-theme="dark"] .modalCard{
+  background: rgba(10,15,40,.94);
+  border-color: var(--line);
+  color: var(--text);
+}
+[data-theme="dark"] .foot,
+[data-theme="dark"] .muted{
+  color: var(--muted);
+}
+
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
