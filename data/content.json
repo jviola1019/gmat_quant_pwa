@@ -2,7 +2,7 @@
   "meta": {
     "title": "GMAT Study PWA",
     "version": "2.0.0",
-    "description": "Offline‑first study guide with cheatsheet, patterns, flashcards, quiz mode and notes."
+    "description": "Offline‑first study guide with cheatsheet, flashcards and quiz mode."
   },
   "sections": [
     {
@@ -66,6 +66,63 @@
           "body": "Multiply by the conjugate to remove radicals in denominators. Expand squares to simplify first.",
           "example": "(√3−√2)² = 5 − 2√6 ⇒ 1/(√3−√2)² = 1/(5−2√6) = 5 + 2√6."
         }
+        ,
+        {
+          "id": "rule-exponents",
+          "type": "rule",
+          "tag": "exponent",
+          "title": "Simplifying a^b·b^c (b=2a, c=4a)",
+          "body": "Given b=2a and c=2b, rewrite a^b as a^{2a} and b^c as (2a)^{4a}. Expand (2a)^{4a} into 2^{4a}·a^{4a}. Combine exponents: a^{2a}·a^{4a} = a^{6a}. Multiply by 2^{4a} to get (16 a^6)^a.",
+          "example": "a^{2a}·(2a)^{4a} = (16 a^6)^a"
+        },
+        {
+          "id": "rule-bonuses",
+          "type": "rule",
+          "tag": "combination",
+          "title": "Minimising bonuses (750, 1500, 7350) totaling 64800",
+          "body": "Maximise the largest bonus ($7,350) to reduce the number of employees. Divide 64,800 by 7,350 to get 8 with remainder 6,000. Use three $1,500 bonuses ($4,500) and two $750 bonuses ($1,500) to make up 6,000. In total: 8 large + 3 middle + 2 small bonuses = 13.",
+          "example": "64,800 = 8×7,350 + 3×1,500 + 2×750"
+        },
+        {
+          "id": "rule-factorial",
+          "type": "rule",
+          "tag": "factorial",
+          "title": "Simplifying (√8! + √9!)²",
+          "body": "Rewrite 9! as 9×8!, so √9! = 3√8!. The sum becomes √8! + 3√8!. Square it: (√8!)² + (3√8!)² + 2·√8!·3√8! = 8! + 9·8! + 6·8! = 16·8!. Count factors of 2: 16 = 2^4 and 8! has 2^7, so the highest power of 2 dividing the result is 2^11.",
+          "example": "(√8! + √9!)² = 16×8! ⇒ highest 2‑power is 2¹¹"
+        },
+        {
+          "id": "rule-kpower",
+          "type": "rule",
+          "tag": "divisibility",
+          "title": "Divisibility of k^4 by 32",
+          "body": "For k^4 to be divisible by 32 (2^5), k must contain at least two factors of 2. If k = 2^t…, then k^4 has 2^{4t}. Solve 4t ≥ 5 ⇒ t ≥ 2. Therefore k is divisible by 4. When dividing k by 32, possible remainder is 4 (a multiple of 4).",
+          "example": "k = 4m ⇒ k^4 divisible by 32; remainder of k mod 32 could be 4."
+        },
+        {
+          "id": "rule-conjugate2",
+          "type": "rule",
+          "tag": "radical",
+          "title": "Evaluating (√15−4√14 + √15+4√14)²",
+          "body": "Recognise pattern (√A + √B)^2 = A + B + 2√(AB). Here A = 15 − 4√14 and B = 15 + 4√14. Sum A+B=30. Product AB = (15−4√14)(15+4√14)=1. √(AB)=1. Then result is 30 + 2×1 = 32.",
+          "example": "(√15−4√14 + √15+4√14)^2 = 32"
+        },
+        {
+          "id": "rule-sumofsquares",
+          "type": "rule",
+          "tag": "diophantine",
+          "title": "Solving (x−y)² + 2y² = 27",
+          "body": "Because squares are nonnegative and sum to 27, test small integer y values with |y| ≤ 3. Substituting y=−1 gives (x+1)² + 2 =27 ⇒ (x+1)²=25 ⇒ x=4 or −6. Among choices, x=4 works.",
+          "example": "(x−y)² + 2y² = 27 ⇒ y=−1, x=4"
+        },
+        {
+          "id": "rule-sqrt",
+          "type": "rule",
+          "tag": "equation",
+          "title": "Solving x + √x = 1",
+          "body": "Let t=√x, so x=t². The equation becomes t² + t = 1 ⇒ t² + t − 1 = 0. Using quadratic formula, t = (−1±√5)/2. Since t=√x ≥ 0, valid solution is t = (√5−1)/2. Thus √x = (√5 − 1)/2.",
+          "example": "√x = (√5 − 1)/2"
+        }
       ]
     },
     {
@@ -114,6 +171,55 @@
           "tag": "percent",
           "q": "If y increases 10% and you have y² in the denominator, what happens?",
           "a": "The denominator multiplies by (1.1)² = 1.21, so the whole expression is divided by 1.21."
+        },
+        {
+          "id": "fc-exponents",
+          "type": "flashcard",
+          "tag": "exponent",
+          "q": "Simplify a^b·b^c when b=2a and c=4a.",
+          "a": "(16a^6)^a — rewrite b and c in terms of a and combine exponents of a and powers of 2."
+        },
+        {
+          "id": "fc-bonuses",
+          "type": "flashcard",
+          "tag": "combination",
+          "q": "Minimum number of bonuses to reach $64,800 using $750, $1,500 and $7,350 at least once?",
+          "a": "13 — allocate 8 of $7,350, 3 of $1,500 and 2 of $750."
+        },
+        {
+          "id": "fc-factorial",
+          "type": "flashcard",
+          "tag": "factorial",
+          "q": "Highest power of 2 dividing (√8! + √9!)²?",
+          "a": "2^11 — rewrite 9! as 9×8!, express the sum as 4√8! and square to 16×8!."
+        },
+        {
+          "id": "fc-kpower",
+          "type": "flashcard",
+          "tag": "divisibility",
+          "q": "If k^4 is divisible by 32, what remainder could k have mod 32?",
+          "a": "4 — k must be divisible by 4, so its remainder modulo 32 must be a multiple of 4."
+        },
+        {
+          "id": "fc-conjugate2",
+          "type": "flashcard",
+          "tag": "radical",
+          "q": "Evaluate (√15−4√14 + √15+4√14)².",
+          "a": "32 — combine like terms and use the conjugate to show the product of middle terms is 1."
+        },
+        {
+          "id": "fc-sumofsquares",
+          "type": "flashcard",
+          "tag": "diophantine",
+          "q": "Which integer x satisfies (x−y)² + 2y² = 27?",
+          "a": "4 — testing small values shows that x=4 with y=−1 works."
+        },
+        {
+          "id": "fc-sqrt",
+          "type": "flashcard",
+          "tag": "equation",
+          "q": "Solve x + √x = 1; what is √x?",
+          "a": "(√5−1)/2 — substituting t=√x leads to t² + t − 1 = 0; choose the non‑negative root."
         }
       ]
     }
@@ -131,83 +237,7 @@
       "items": []
     }
   ],
-  "notes": [
-    {
-      "id": "note-exponents",
-      "title": "Evaluating a^b b^c with a>0, b=2a, c=4a",
-      "steps": [
-        "Identify that b equals 2a and c equals 4a by substituting b=2a and c=2b.",
-        "Rewrite a^b as a^(2a) and b^c as (2a)^(4a).",
-        "Expand (2a)^(4a) into 2^(4a) × a^(4a).",
-        "Combine exponents: a^(2a) × a^(4a) = a^(6a). Multiply by 2^(4a) to get 16^a × a^(6a).",
-        "Express 16^a × a^(6a) as (16 a^6)^a."
-      ]
-    },
-    {
-      "id": "note-bonuses",
-      "title": "Minimising number of bonuses",
-      "steps": [
-        "Recognise that each bonus amount ($750, $1,500, and $7,350) must be used at least once.",
-        "To minimise the number of employees, maximise the number of $7,350 bonuses because larger bonuses reduce the count.",
-        "Divide the total $64,800 by $7,350. The largest integer less than this quotient is 8, giving 8 × $7,350 = $58,800.",
-        "Subtract $58,800 from $64,800 to find $6,000 remaining. Use $1,500 and $750 bonuses to make $6,000 (three $1,500 and two $750 bonuses).",
-        "Add the counts: 8 large bonuses + 3 middle bonuses + 2 small bonuses = 13 total bonuses."
-      ]
-    },
-    {
-      "id": "note-factorial",
-      "title": "Simplifying (√8! + √9!)²",
-      "steps": [
-        "Observe that 9! = 9 × 8!; rewrite √9! as √(9 × 8!) = √9 × √8! = 3√8!.",
-        "Write the sum as √8! + 3√8!, then square it using (a + b)² = a² + b² + 2ab.",
-        "Compute a² + b²: (√8!)² + (3√8!)² = 8! + 9·8! = 10·8!.",
-        "Compute the cross term: 2·√8!·3√8! = 6·8!.",
-        "Add these together to get 16·8!. Recognise that 16 = 2^4 and 8! contains 2^7 factors of 2, so the highest power of 2 dividing the result is 2^(4+7) = 2^11."
-      ]
-    },
-    {
-      "id": "note-kpower",
-      "title": "Divisibility of k^4 by 32",
-      "steps": [
-        "Rewrite 32 as 2^5. For k^4 to be divisible by 2^5, k must have enough factors of 2.",
-        "If k contains 2^t, then k^4 contains 2^(4t). You need 4t ≥ 5, so t ≥ 2.",
-        "Therefore k must be divisible by 2^2 = 4.",
-        "Any integer divisible by 4 leaves a remainder divisible by 4 when divided by 32. Among the given choices, only 4 works."
-      ]
-    },
-    {
-      "id": "note-conjugate",
-      "title": "Simplifying (√15−4√14 + √15+4√14)²",
-      "steps": [
-        "Recognise the structure (√A + √B)², which expands to A + B + 2√(AB). Here A = 15 − 4√14 and B = 15 + 4√14.",
-        "Add A and B: (15 − 4√14) + (15 + 4√14) = 30.",
-        "Multiply A and B as a difference of squares: (15 − 4√14)(15 + 4√14) = 15² − (4√14)² = 225 − 16·14 = 1.",
-        "Take the square root of AB: √1 = 1.",
-        "Combine the terms: A + B + 2√(AB) = 30 + 2·1 = 32."
-      ]
-    },
-    {
-      "id": "note-sumofsquares",
-      "title": "Solving (x−y)² + 2y² = 27",
-      "steps": [
-        "Since squares grow quickly, both (x−y)² and 2y² must be small and their sum is 27. Check small integer values of y.",
-        "For |y| > 3, 2y² exceeds 27, so possible values of y are −3 to 3.",
-        "Test y = −1. The equation becomes (x+1)² + 2 = 27 ⇒ (x+1)² = 25, which has integer solutions x = 4 and x = −6.",
-        "Of the answer choices (−2, −1, 3, 4, 5), only x = 4 works with some integer y.",
-        "Therefore 4 is a possible value of x."
-      ]
-    },
-    {
-      "id": "note-sqrt",
-      "title": "Solving x + √x = 1",
-      "steps": [
-        "Introduce a substitution t = √x, so that x = t². The equation becomes t² + t = 1.",
-        "Rearrange to t² + t − 1 = 0 and solve using the quadratic formula.",
-        "The solutions to t² + t − 1 = 0 are (−1 ± √5)/2. A square root cannot be negative, so only t = (√5 − 1)/2 is valid.",
-        "Therefore √x = (√5 − 1)/2."
-      ]
-    }
-  ],
+  "notes": [],
   "quiz": {
     "quant": [
       {

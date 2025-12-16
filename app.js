@@ -116,8 +116,6 @@
   async function loadContent(){
     const res = await fetch('data/content.json', {cache:'no-cache'});
     const json = await res.json();
-    // Ensure notes property exists
-    if(!json.notes){ json.notes = []; }
     state.content = json;
   }
 
@@ -149,12 +147,7 @@
       renderQuiz();
       return;
     }
-    if(view === 'notes'){
-      viewTitle.textContent = 'Study Notes';
-      viewSubtitle.textContent = 'Explanations and your scratchpad.';
-      renderNotes();
-      return;
-    }
+    // notes view has been removed; study notes are now integrated into the cheatsheet
     // Handle future GMAT sections that do not yet have content.
     if(!sec){
       viewTitle.textContent = view.charAt(0).toUpperCase() + view.slice(1);
@@ -384,6 +377,7 @@
         </div>
       </div>
       <div class="itemBody" style="display:block">
+        <div class="qProgress"><div class="qProgressBar" id="qProgressBar"></div></div>
         <div id="qPrompt" style="font-size:13px; line-height:1.45; margin-bottom:10px;">Tap Start to begin.</div>
         <div id="qOpts" class="actionsRow" style="gap:8px;"></div>
         <div id="qWhy" class="muted" style="margin-top:10px;"></div>
@@ -401,6 +395,7 @@
     const qScoreEl = header.querySelector('#qScore');
     const qWrongEl = header.querySelector('#qWrong');
     const qNumEl = header.querySelector('#qNum');
+    const qProgressBar = header.querySelector('#qProgressBar');
 
     // Section change handlers
     header.querySelectorAll('button[data-sec]').forEach(btn => {
@@ -431,6 +426,11 @@
       qNumEl.textContent = String(quizIdx+1);
       qScoreEl.textContent = String(quizScore);
       qWrongEl.textContent = String(state.quizWrong);
+      // Update progress bar width based on current question index
+      if(qProgressBar){
+        const ratio = quizIdx / qbank.length;
+        qProgressBar.style.width = (ratio * 100) + '%';
+      }
       qPrompt.textContent = q.p;
       qWhy.textContent = '';
       qOpts.innerHTML = '';
@@ -549,12 +549,14 @@
   const searchInput = $('#searchInput');
   onTap($('#clearSearch'), ()=>{
     searchInput.value=''; state.search='';
-    if(state.view==='quiz' || state.view==='notes' || !state.content.sections.find(s=>s.id===state.view)) return;
+    // Only filter lists in list views (not quiz). Notes view has been removed.
+    if(state.view==='quiz' || !state.content.sections.find(s=>s.id===state.view)) return;
     renderList();
   });
   searchInput.addEventListener('input', ()=>{
     state.search = searchInput.value || '';
-    if(state.view==='quiz' || state.view==='notes' || !state.content.sections.find(s=>s.id===state.view)) return;
+    // Do not filter during quiz; notes view no longer exists.
+    if(state.view==='quiz' || !state.content.sections.find(s=>s.id===state.view)) return;
     renderList(false);
   });
 
@@ -578,7 +580,7 @@
 
   // --------------------- Export/Import Data ---------------------
   onTap($('#exportBtn'), ()=>{
-    const payload = { meta:{exportedAt:new Date().toISOString()}, user: state.user, notes: localStorage.getItem('gmat_pwa_notes')||'' };
+    const payload = { meta:{exportedAt:new Date().toISOString()}, user: state.user };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -594,7 +596,6 @@
     try{
       const payload = JSON.parse(text);
       if(payload.user){ state.user = payload.user; saveUserData(); }
-      if(typeof payload.notes === 'string'){ localStorage.setItem('gmat_pwa_notes', payload.notes); }
       setView(state.view);
       alert('Imported successfully.');
     }catch{
@@ -706,11 +707,11 @@
     { label:'Go: Cheatsheet', desc:'Open the cheatsheet view', act:()=>setView('cheatsheet') },
     { label:'Go: Flashcards', desc:'Open flashcards view', act:()=>setView('flashcards') },
     { label:'Go: Quiz', desc:'Open quiz mode', act:()=>setView('quiz') },
-    { label:'Go: Notes', desc:'Open study notes', act:()=>setView('notes') },
+    // Notes view removed; no command needed
     { label:'Go: Verbal', desc:'Open the verbal section (if available)', act:()=>setView('verbal') },
     { label:'Go: Integrated', desc:'Open the integrated reasoning section (if available)', act:()=>setView('integrated') },
     { label:'Add new item', desc:'Create a new card', act:()=>openEditModal(null) },
-    { label:'Export data', desc:'Download your local items + notes', act:()=>$('#exportBtn').click() },
+    { label:'Export data', desc:'Download your local items', act:()=>$('#exportBtn').click() },
     { label:'Collapse all', desc:'Collapse the current list', act:()=>$('#collapseAll').click() },
     { label:'Expand all', desc:'Expand the current list', act:()=>$('#expandAll').click() },
     { label:'Timer: Reset', desc:'Reset study sprint timer', act:()=>$('#tReset').click() }

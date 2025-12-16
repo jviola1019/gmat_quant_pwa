@@ -23,6 +23,11 @@
   /* Global radius and shadows */
   --r:16px;
   --shadow: 0 4px 12px rgba(0,0,0,.06);
+
+  /* Accent colour used for progress bars, badges and other highlights */
+  --accent:#4e73eb;
+  --accent-light: rgba(78,115,235,.35);
+  --accent-bg: rgba(78,115,235,.15);
 }
 
 /* Dark theme variables and overrides. These values are inspired by modern UI
@@ -146,11 +151,27 @@ a, button, [role="button"]{-webkit-tap-highlight-color: transparent; touch-actio
 .navItem{flex:0 0 auto; display:flex; align-items:center; gap:8px; border:1px solid transparent; background:transparent; color:var(--muted); padding:10px 14px; border-radius:14px; font-size:13px; cursor:pointer; transition:background .15s, border-color .15s;}
 .navItem .ico{font-family:var(--mono); opacity:.8}
 .navItem:hover{background:rgba(0,0,0,.05);}
-.navItem[aria-current="page"]{border-color:rgba(78,115,235,.35); background:rgba(78,115,235,.15); color:var(--text);}
+.navItem[aria-current="page"]{
+  border-color: var(--accent-light);
+  background: var(--accent-bg);
+  color: var(--text);
+}
 .main{margin-top:10px; display:grid; grid-template-columns: 1.35fr .65fr; gap:10px;}
 @media (max-width: 900px){ .main{grid-template-columns:1fr;} }
-.panel{border:1px solid var(--line); background:rgba(255,255,255,.5); border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden;}
-.panel.compact{box-shadow:none;}
+.panel{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.5);
+  border-radius:var(--r);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  /* Apply a subtle glass blur for a futuristic vibe */
+  backdrop-filter: blur(8px);
+}
+.panel.compact{
+  box-shadow:none;
+  background:rgba(255,255,255,.4);
+  backdrop-filter: blur(6px);
+}
 .toolbar{padding:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line2); background:rgba(0,0,0,.02);}
 .search{flex:1 1 280px; min-width:220px; display:flex; align-items:center; gap:8px; padding:10px; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.6);}
 .search input{width:100%; border:none; outline:none; background:transparent; color:var(--text); font-size:13px;}
@@ -198,6 +219,14 @@ code{font-family:var(--mono); font-size:12px; color:var(--text);}
 .cmdInput{margin:10px; display:flex; gap:8px; align-items:center; padding:10px; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.6);}
 .cmdInput input{width:100%; border:none; outline:none; background:transparent; color:var(--text); font-size:13px;}
 .cmdList{padding:0 10px 10px; display:grid; gap:8px;}
+
+/* Quiz progress bar */
+.qProgress{height:6px; width:100%; background:var(--line2); border-radius:5px; overflow:hidden; margin:8px 0;}
+.qProgressBar{height:100%; width:0%; background:var(--accent); transition:width .3s ease;}
+
+/* Dark mode tweaks for progress bar */
+[data-theme="dark"] .qProgress{background:rgba(255,255,255,.15);}
+[data-theme="dark"] .qProgressBar{background:rgba(78,115,235,.75);}
 .cmd{border:1px solid var(--line); background:rgba(255,255,255,.6); border-radius:14px; padding:10px; cursor:pointer; color:var(--text);}
 .cmd .c1{font-family:var(--mono); font-size:12px; color:var(--text)}
 .cmd .c2{margin-top:4px; font-size:12px; color:var(--muted)}

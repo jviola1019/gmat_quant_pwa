@@ -6,7 +6,7 @@
   "display": "standalone",
   "background_color": "#0b0e24",
   "theme_color": "#0b0e24",
-  "description": "Modern offline‑first GMAT study app with notes, quizzes, flashcards and multi‑section support. Cheatsheet and patterns have been unified.",
+  "description": "Modern offline‑first GMAT study app with cheatsheet, flashcards and multi‑step quizzes. Study notes have been folded into the cheatsheet.",
   "icons": [
     {
       "src": "icons/icon-192.png",
