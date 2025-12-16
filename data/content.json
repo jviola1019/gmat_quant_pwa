@@ -1,91 +1,790 @@
 {
-  "meta": { "title": "GMAT Study PWA", "version": "5.0" },
+  "meta": {
+    "title": "GMAT Study PWA",
+    "version": "6.0",
+    "questionCount": 18,
+    "format": "multiple-choice"
+  },
   "items": [
     {
-      "id": "q-32",
+      "id": "q-exponents-abc",
       "section": "quant",
-      "tags": ["divisibility", "number-theory"],
+      "tags": ["exponents", "algebra", "substitution"],
       "cheatsheet": {
-        "title": "Power Divisibility (32 example)",
-        "body": "To check if k^4 is divisible by 32 (2^5), k must have enough factors of 2. 4 * factors_in_k >= 5 -> k needs 2 factors of 2. Thus k is a multiple of 4.",
-        "example": "k^4 div by 32 implies k is multiple of 4."
+        "title": "Exponent Substitution with Variables",
+        "body": "When given relationships like b = 2a and c = 2b, substitute step by step. First find c in terms of a: c = 2(2a) = 4a. Then rewrite expressions like a^b · b^c by substituting: a^(2a) · (2a)^(4a). Use exponent rules: (2a)^(4a) = 2^(4a) · a^(4a). Combine: a^(2a) · 2^(4a) · a^(4a) = 2^(4a) · a^(6a) = (2^4)^a · (a^6)^a = (16a^6)^a.",
+        "example": "If b = 2a, c = 4a: a^b · b^c = a^(2a) · (2a)^(4a) = (16a^6)^a",
+        "keyFormulas": ["(xy)^n = x^n · y^n", "x^m · x^n = x^(m+n)", "(x^m)^n = x^(mn)"]
       },
       "flashcard": {
-        "front": "If k^4 is divisible by 32, what is the smallest multiple k must be?",
-        "back": "4 (k must have 2 factors of 2)"
+        "front": "If a > 0, b = 2a, and c = 2b, what is a^b · b^c equivalent to?",
+        "back": "(16a^6)^a — Substitute c = 4a, then expand (2a)^(4a) = 16^a · a^(4a), combine with a^(2a)"
       },
-      "quiz": [
-        { "step": 1, "p": "Step 1: Understand 32. 32 = 2 to the power of what?", "accept": ["5"], "a": "5" },
-        { "step": 2, "p": "Step 2: If k has 'x' factors of 2, then k^4 has '4x' factors. We need 4x ≥ 5. What is the smallest integer x?", "accept": ["2"], "a": "2" },
-        { "step": 3, "p": "Step 3: If k has 2 factors of 2 (2^2), then k is a multiple of what number?", "accept": ["4"], "a": "4" }
-      ]
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: Translate the relationships. If b = 2a and c = 2b, what is c in terms of a?",
+            "choices": ["c = 2a", "c = 3a", "c = 4a", "c = 6a"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 2: Rewrite b^c using a. If b = 2a and c = 4a, which is b^c?",
+            "choices": ["(2a)^(2a)", "(2a)^(4a)", "2^(4a) · a^(2a)", "2^(2a) · a^(4a)"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 3: Combine the powers. a^b · b^c = a^(2a) · (2a)^(4a) simplifies to which single power?",
+            "choices": ["(2a^4)^a", "(2a^6)^a", "(16a^6)^a", "(16a^8)^a"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Final: If a > 0, b = 2a, and c = 2b, which of the following is equivalent to a^b · b^c?",
+            "choices": ["(2a^4)^a", "(2a^6)^a", "(2a^8)^a", "(16a^6)^a", "(16a^8)^a"],
+            "answerIndex": 3
+          }
+        ]
+      }
     },
     {
-      "id": "q-digits",
+      "id": "q-bonus-optimization",
       "section": "quant",
-      "tags": ["digits"],
+      "tags": ["optimization", "word-problems", "arithmetic"],
       "cheatsheet": {
-        "title": "Digit Counting",
-        "body": "Rewrite 4^x * 5^y as 2^(2x) * 5^y. Pair 2s and 5s to make 10s. The count is exponent + coeff digits.",
-        "example": "4^9 * 5^17 -> 2^18 * 5^17 -> 2 * 10^17 -> 18 digits"
+        "title": "Minimizing Count with Fixed Sum",
+        "body": "To minimize the number of items summing to a target, use the largest denominations first. Strategy: (1) Use each required amount at least once if stated. (2) Calculate remaining amount. (3) Maximize usage of largest value. (4) Fill remainder with smaller values. For $64,800 with $750, $1,500, $7,350: Start with 1 each of $750 and $1,500 ($2,250), leaving $62,550. Divide by $7,350 to get 8 bonuses ($58,800), remainder $3,750. Split $3,750 into 2×$1,500 + 2×$750 = $4,500. Adjust to get exactly $3,750 with 3×$750 + 2×$1,500.",
+        "example": "Fewest bonuses for $64,800: 1($750) + 1($1,500) + 8($7,350) + 2($1,500) + 1($750) = 13 total",
+        "keyFormulas": ["Minimize count = Maximize largest denomination usage"]
       },
       "flashcard": {
-        "front": "Strategy for 4^9 * 5^17?",
-        "back": "Convert 4->2s, pair with 5s to make 10s."
+        "front": "To minimize the count of items that sum to a fixed total, what strategy should you use?",
+        "back": "Use the largest denomination as many times as possible, then fill remainder with smaller values. Always check constraints (like 'at least one of each')."
       },
-      "quiz": [
-        { "step": 1, "p": "Rewrite 4^9 as a power of 2.", "accept": ["2^18"], "a": "2^18" },
-        { "step": 2, "p": "We have 2^18 * 5^17. How many pairs of (2*5) can we form?", "accept": ["17"], "a": "17" },
-        { "step": 3, "p": "What is the remaining factor?", "accept": ["2"], "a": "2" }
-      ]
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: To use the fewest bonuses, which bonus amount should we use as many times as possible?",
+            "choices": ["$750", "$1,500", "$7,350", "Use equal amounts of all three"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 2: We must use each amount at least once. Start with 1 of $750 and 1 of $1,500. How much is left from $64,800?",
+            "choices": ["$62,550", "$62,700", "$63,300", "$64,050"],
+            "answerIndex": 0
+          },
+          {
+            "prompt": "Step 3: Now pack in as many $7,350 bonuses as possible. If x is the number of $7,350 bonuses, what is the largest x that does not exceed the remaining total?",
+            "choices": ["7", "8", "9", "10"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 4: After using 8 bonuses of $7,350, the leftover must be made using $750 and $1,500. What pair (y,z) works, where y = # of $1,500 and z = # of $750, both at least 1?",
+            "choices": ["y=1, z=1", "y=2, z=2", "y=3, z=2", "y=4, z=1"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Final: Last year a company gave bonuses to a number of employees, but only in the three amounts of $750, $1,500, and $7,350. If the total amount of the bonuses was $64,800 and each of the three amounts was given to at least one employee, what is the fewest number of bonuses that the company could have given to employees last year?",
+            "choices": ["10", "11", "12", "13", "14"],
+            "answerIndex": 3
+          }
+        ]
+      }
     },
     {
-      "id": "q-range",
+      "id": "q-factorial-powers",
       "section": "quant",
-      "tags": ["range"],
+      "tags": ["factorials", "exponents", "prime-factorization"],
       "cheatsheet": {
-        "title": "Combined Range",
-        "body": "To minimize combined range, overlap intervals fully. Smallest combined = Largest individual.",
-        "example": "Range 20 & 25. Overlap -> 25."
+        "title": "Factorial Prime Factorization",
+        "body": "To find the highest power of prime p dividing n!, use Legendre's formula: v_p(n!) = floor(n/p) + floor(n/p²) + floor(n/p³) + ... For 8!: v_2(8!) = floor(8/2) + floor(8/4) + floor(8/8) = 4 + 2 + 1 = 7. When simplifying √(8!) + √(9!), factor: √(9!) = √(9·8!) = 3√(8!). So √(8!) + √(9!) = √(8!)(1 + 3) = 4√(8!). Squaring: [4√(8!)]² = 16 · 8!. Total factors of 2: 4 (from 16) + 7 (from 8!) = 11.",
+        "example": "v_2(8!) = 4+2+1 = 7. (√8! + √9!)² = 16·8! has 4+7 = 11 factors of 2",
+        "keyFormulas": ["v_p(n!) = Σ floor(n/p^k)", "√(n·m) = √n · √m", "√(9!) = 3√(8!)"]
       },
       "flashcard": {
-        "front": "Two ranges 20 and 25. Smallest combined range?",
-        "back": "25"
+        "front": "What is the greatest n such that 2^n divides (√8! + √9!)²?",
+        "back": "11 — Because (√8! + √9!)² = 16·8!, and 8! has 7 factors of 2, plus 4 from 16 = 11 total"
       },
-      "quiz": [
-        { "step": 1, "p": "To minimize range, how should the two sets relate?", "accept": ["overlap", "nested", "inside"], "a": "overlap" },
-        { "step": 2, "p": "If range 20 is inside range 25, what is the total width?", "accept": ["25"], "a": "25" }
-      ]
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: Factor out the common term. √(9!) can be rewritten as √(9·8!). Which is correct?",
+            "choices": ["√(9!) = 9·√(8!)", "√(9!) = 3·√(8!)", "√(9!) = √9 + √(8!)", "√(9!) = √(8!)/3"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 2: Simplify the sum. √(8!) + √(9!) becomes which expression?",
+            "choices": ["√(8!)(1+3)", "√(8!)(1+9)", "√(8!)(3-1)", "√(8!)(9-1)"],
+            "answerIndex": 0
+          },
+          {
+            "prompt": "Step 3: Square it. [4√(8!)]² equals:",
+            "choices": ["8!", "4·8!", "16·8!", "32·8!"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 4: Count factors of 2. The power of 2 in 8! is v₂(8!) = floor(8/2)+floor(8/4)+floor(8/8) =",
+            "choices": ["6", "7", "8", "9"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 5: Multiply by 16 adds how many extra factors of 2?",
+            "choices": ["2", "3", "4", "5"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Final: The value of (√(8!) + √(9!))² is an integer. What is the greatest integer n such that 2^n is a factor of (√(8!) + √(9!))²?",
+            "choices": ["3", "6", "8", "11", "14"],
+            "answerIndex": 3
+          }
+        ]
+      }
     },
     {
-      "id": "q-linear",
+      "id": "q-divisibility-remainder",
       "section": "quant",
-      "tags": ["linear"],
+      "tags": ["divisibility", "remainders", "number-theory"],
       "cheatsheet": {
-        "title": "Linear Penalty",
-        "body": "Penalty p per 10 units over L -> p * (x - L) / 10.",
-        "example": "0.5 mpg per 10mph over 40 -> 0.5(s-40)/10"
+        "title": "Divisibility and Remainders with Powers",
+        "body": "To determine divisibility of k^n by 2^m, count factors of 2 in k. If k has exactly one factor of 2 (k = 2·odd), then k⁴ has 4 factors of 2. For k⁴ to be divisible by 32 = 2⁵, k needs at least 2 factors of 2, meaning k must be divisible by 4. If k ≡ r (mod 32) and k is divisible by 4, then r must be a multiple of 4. Check: 2 is not divisible by 4, 4 is divisible by 4, 6 is not divisible by 4. Only remainders that are multiples of 4 (like 4, 8, 12, 16, 20, 24, 28, 0) work.",
+        "example": "k⁴ ÷ 32 = 0 remainder → k divisible by 4 → k mod 32 ∈ {0,4,8,12,16,20,24,28}",
+        "keyFormulas": ["32 = 2⁵", "If k = 2^a · m (m odd), then k⁴ = 2^(4a) · m⁴"]
       },
       "flashcard": {
-        "front": "Expression: 0.5 penalty per 10 units over 40 (Speed S).",
-        "back": "(S-40)/20"
+        "front": "If k⁴ is divisible by 32, what must be true about k mod 32?",
+        "back": "k mod 32 must be a multiple of 4 (0, 4, 8, 12, 16, 20, 24, or 28). So from {2, 4, 6}, only 4 works."
       },
-      "quiz": [
-        { "step": 1, "p": "Expression for 'amount over 40' given speed S.", "accept": ["s-40"], "a": "s-40" },
-        { "step": 2, "p": "Divide by the 'per 10 mph' unit.", "accept": ["(s-40)/10"], "a": "(s-40)/10" },
-        { "step": 3, "p": "Multiply by penalty 0.5. Simplify.", "accept": ["(s-40)/20"], "a": "(s-40)/20" }
-      ]
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: Rewrite 32 as a power of 2.",
+            "choices": ["32 = 2⁴", "32 = 2⁵", "32 = 2⁶", "32 = 2⁸"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 2: If k has exactly one factor of 2 (k is even but not divisible by 4), how many factors of 2 does k⁴ have?",
+            "choices": ["1", "2", "4", "8"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 3: To make k⁴ divisible by 32 (=2⁵), what must be true about k?",
+            "choices": ["k must be odd", "k must be divisible by 2", "k must be divisible by 4", "k must be divisible by 8"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 4: If k is divisible by 4, then k mod 32 must be a multiple of:",
+            "choices": ["2", "3", "4", "5"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Final: When the integer k⁴ is divided by 32, the remainder is 0. Which of the following could be the remainder when the integer k is divided by 32?\nI. 2\nII. 4\nIII. 6",
+            "choices": ["None", "I only", "II only", "I and II", "II and III"],
+            "answerIndex": 2
+          }
+        ]
+      }
     },
     {
-      "id": "q-sci",
+      "id": "q-nested-radicals",
       "section": "quant",
-      "tags": ["scientific"],
-      "cheatsheet": { "title": "Scientific Notation %", "body": "% means divide by 100.", "example": "0.03% = 0.0003 = 3x10^-4" },
-      "flashcard": { "front": "Convert 0.0003% to Sci Notation.", "back": "3 x 10^-6" },
-      "quiz": [
-        { "step": 1, "p": "Convert 0.0003 to sci notation (ignoring %).", "accept": ["3x10^-4"], "a": "3x10^-4" },
-        { "step": 2, "p": "Now apply the %. (Divide by 100). New exponent?", "accept": ["-6", "10^-6"], "a": "-6" }
-      ]
+      "tags": ["radicals", "algebra", "simplification"],
+      "cheatsheet": {
+        "title": "Nested Radicals and Conjugates",
+        "body": "For expressions like (√(a-b) + √(a+b))², use the identity (x+y)² = x² + 2xy + y². Here A = √(15-4√14), B = √(15+4√14). A² + B² = (15-4√14) + (15+4√14) = 30. For AB, use difference of squares: AB = √[(15-4√14)(15+4√14)] = √[225-16·14] = √[225-224] = √1 = 1. Therefore (A+B)² = 30 + 2(1) = 32.",
+        "example": "(√(15-4√14) + √(15+4√14))² = 30 + 2(1) = 32",
+        "keyFormulas": ["(x+y)² = x² + 2xy + y²", "(a-b)(a+b) = a² - b²", "√x · √y = √(xy)"]
+      },
+      "flashcard": {
+        "front": "What is (√(15-4√14) + √(15+4√14))²?",
+        "back": "32 — Use (A+B)² = A² + B² + 2AB where A²+B² = 30 and AB = √(225-224) = 1"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: Let A = √(15−4√14) and B = √(15+4√14). What is (A+B)² in terms of A², B², and AB?",
+            "choices": ["A² + B²", "A² + B² + 2AB", "A² + B² − 2AB", "(A²)(B²)"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 2: Compute A² + B².",
+            "choices": ["0", "15", "30", "60"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 3: Compute AB = √[(15−4√14)(15+4√14)]. This equals √(15²−(4√14)²) = √(?)",
+            "choices": ["√0", "√1", "√2", "√14"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 4: Put it together: (A+B)² = 30 + 2·AB = 30 + 2·1 =",
+            "choices": ["30", "31", "32", "33"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Final: (√(15−4√14) + √(15+4√14))² =",
+            "choices": ["28", "30", "32", "34", "36"],
+            "answerIndex": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-integer-equation",
+      "section": "quant",
+      "tags": ["algebra", "integers", "quadratics"],
+      "cheatsheet": {
+        "title": "Finding Integer Solutions",
+        "body": "For equations like (x-y)² + 2y² = 27, recognize that (x-y)² ≥ 0 and is a perfect square. So 2y² ≤ 27, meaning y² ≤ 13.5, so |y| ≤ 3. Test y = ±1, ±2, ±3. For y = -1: (x+1)² + 2 = 27, so (x+1)² = 25, giving x+1 = ±5, thus x = 4 or x = -6. For y = 1: (x-1)² + 2 = 27, so (x-1)² = 25, giving x = 6 or x = -4. Check which values appear in answer choices.",
+        "example": "y = -1: (x+1)² = 25 → x = 4 or -6. y = 1: (x-1)² = 25 → x = 6 or -4",
+        "keyFormulas": ["Perfect squares: 0, 1, 4, 9, 16, 25...", "(x-y)² is always ≥ 0"]
+      },
+      "flashcard": {
+        "front": "If (x-y)² + 2y² = 27 and x, y are integers, what are possible values of x?",
+        "back": "x ∈ {-6, -4, 4, 6}. Test small values of y where 2y² ≤ 27. For y=±1: x = 4, -6 or 6, -4"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: Since x and y are integers, (x−y)² is always:",
+            "choices": ["Odd", "Even", "A nonnegative perfect square", "Always prime"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 2: From (x−y)² + 2y² = 27, what inequality must be true so (x−y)² is not negative?",
+            "choices": ["2y² ≥ 27", "2y² ≤ 27", "y² ≥ 27", "y² ≤ 27/4"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 3: Try y = −1. Then (x−(−1))² + 2(−1)² = 27 becomes (x+1)² + 2 = 27, so (x+1)² =",
+            "choices": ["23", "24", "25", "26"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 4: If (x+1)² = 25, then x could be:",
+            "choices": ["−6 or 4", "−5 or 5", "−4 or 6", "−3 or 7"],
+            "answerIndex": 0
+          },
+          {
+            "prompt": "Final: If x and y are integers and if (x−y)² + 2y² = 27, which of the following could be the value of x?",
+            "choices": ["−2", "−1", "3", "4", "5"],
+            "answerIndex": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-sqrt-substitution",
+      "section": "quant",
+      "tags": ["algebra", "quadratics", "substitution"],
+      "cheatsheet": {
+        "title": "Substitution for Radical Equations",
+        "body": "For equations mixing x and √x, let t = √x (where t ≥ 0). Then x = t². The equation x + √x = 1 becomes t² + t = 1, or t² + t - 1 = 0. Using the quadratic formula: t = (-1 ± √5)/2. Since t ≥ 0, we need t = (-1 + √5)/2. This is the golden ratio minus 1, approximately 0.618. Note: √x = t = (-1 + √5)/2 = (√5 - 1)/2.",
+        "example": "x + √x = 1 → t² + t - 1 = 0 → t = (√5 - 1)/2 ≈ 0.618",
+        "keyFormulas": ["Quadratic formula: x = (-b ± √(b²-4ac))/2a", "Let t = √x, then x = t²"]
+      },
+      "flashcard": {
+        "front": "If x + √x = 1, what is the value of √x?",
+        "back": "(√5 - 1)/2 ≈ 0.618 — Substitute t = √x, solve t² + t - 1 = 0, take positive root"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: Let t = √x. Then x =",
+            "choices": ["t", "t²", "2t", "1/t"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 2: Substitute into x + √x = 1. You get:",
+            "choices": ["t² + t = 1", "t² − t = 1", "t + 1 = t²", "t² + 1 = t"],
+            "answerIndex": 0
+          },
+          {
+            "prompt": "Step 3: Solve t² + t − 1 = 0. The positive root is:",
+            "choices": ["(−1 − √5)/2", "(−1 + √5)/2", "(1 − √5)/2", "(1 + √5)/2"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Final: If x is a real number and x + √x = 1, which of the following is the value of √x?",
+            "choices": ["(1/2)(√5 − 1)", "(1/2)(√5 + 1)", "(1/2)(√5 − 3)", "(1/2)(√5 + 3)", "(1/2)(3 − √5)"],
+            "answerIndex": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-fraction-simplify",
+      "section": "quant",
+      "tags": ["fractions", "GCF", "simplification"],
+      "cheatsheet": {
+        "title": "Simplifying Fractions Using GCF",
+        "body": "To simplify a fraction, divide both numerator and denominator by their Greatest Common Factor (GCF). For 10/15: Find GCF(10, 15). Factors of 10: 1, 2, 5, 10. Factors of 15: 1, 3, 5, 15. Common factors: 1, 5. GCF = 5. So 10/15 = (10÷5)/(15÷5) = 2/3. Always check if the result can be simplified further.",
+        "example": "10/15: GCF(10,15) = 5, so 10/15 = 2/3",
+        "keyFormulas": ["GCF = Greatest Common Factor", "a/b simplified = (a÷GCF)/(b÷GCF)"]
+      },
+      "flashcard": {
+        "front": "What is 10/15 in simplest form?",
+        "back": "2/3 — Divide both by GCF(10,15) = 5"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: To simplify a fraction, you divide numerator and denominator by their:",
+            "choices": ["Sum", "Difference", "Greatest common factor (GCF)", "Least common multiple (LCM)"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 2: The GCF of 10 and 15 is:",
+            "choices": ["1", "2", "5", "10"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 3: 10/15 simplified equals:",
+            "choices": ["2/3", "3/5", "5/2", "1/3"],
+            "answerIndex": 0
+          },
+          {
+            "prompt": "Final: What is the simplified form of 10/15?",
+            "choices": ["2/3", "3/5", "5/8", "2/5", "3/2"],
+            "answerIndex": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-trust-fund",
+      "section": "quant",
+      "tags": ["fractions", "word-problems", "algebra"],
+      "cheatsheet": {
+        "title": "Finding Total from Fractional Parts",
+        "body": "When parts of a whole are given as fractions plus a remaining amount, add the fractions and subtract from 1. If 1/2 + 1/4 + 1/5 is invested and $10,000 remains: Find LCD(2,4,5) = 20. Convert: 10/20 + 5/20 + 4/20 = 19/20. Remaining: 1 - 19/20 = 1/20. If 1/20 = $10,000, then total = 20 × $10,000 = $200,000.",
+        "example": "1/2 + 1/4 + 1/5 = 19/20 invested. Remaining 1/20 = $10,000. Total = $200,000",
+        "keyFormulas": ["LCD = Least Common Denominator", "Remaining fraction = 1 - (sum of given fractions)"]
+      },
+      "flashcard": {
+        "front": "If 1/2 + 1/4 + 1/5 of a fund is invested and $10,000 remains, what is the total?",
+        "back": "$200,000 — Invested = 19/20, so remaining 1/20 = $10,000, total = 20 × $10,000"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: Add the invested fractions: 1/2 + 1/4 + 1/5 =",
+            "choices": ["19/20", "9/10", "17/20", "3/4"],
+            "answerIndex": 0
+          },
+          {
+            "prompt": "Step 2: If 19/20 is invested, the remaining fraction is:",
+            "choices": ["1/20", "1/19", "1/10", "1/5"],
+            "answerIndex": 0
+          },
+          {
+            "prompt": "Step 3: If the remaining 1/20 equals $10,000, then the total is 20 times that, which is:",
+            "choices": ["$100,000", "$150,000", "$200,000", "$500,000"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Final: If 1/2 of the money in a certain trust fund was invested in stocks, 1/4 in bonds, 1/5 in a mutual fund, and the remaining $10,000 in a government certificate, what was the total amount of the trust fund?",
+            "choices": ["$100,000", "$150,000", "$200,000", "$500,000", "$2,000,000"],
+            "answerIndex": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-mixture-problem",
+      "section": "quant",
+      "tags": ["mixtures", "algebra", "percentages"],
+      "cheatsheet": {
+        "title": "Mixture Problems with Percentages",
+        "body": "For mixture problems, set up an equation: (% of component A) × (amount of A) + (% of component B) × (amount of B) = total of component. Let x = grams of food X. Then (300-x) = grams of food Y. Equation: 0.10x + 0.15(300-x) = 38. Simplify: 0.10x + 45 - 0.15x = 38 → -0.05x = -7 → x = 140 grams.",
+        "example": "10% of x + 15% of (300-x) = 38g protein → x = 140g of food X",
+        "keyFormulas": ["Total protein = (protein% in X)(amount X) + (protein% in Y)(amount Y)"]
+      },
+      "flashcard": {
+        "front": "300g mixture of foods X (10% protein) and Y (15% protein) gives 38g protein. How much of X?",
+        "back": "140 grams — Set up 0.10x + 0.15(300-x) = 38, solve for x = 140"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: Let x be grams of food X. Then grams of food Y equals:",
+            "choices": ["300 + x", "300 − x", "x/300", "300x"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 2: Protein equation: 10% of X + 15% of Y = 38 becomes:",
+            "choices": ["0.10x + 0.15(300 − x) = 38", "0.10x + 0.15x = 38", "0.10(300 − x) + 0.15x = 38", "0.10x + 0.15(300 + x) = 38"],
+            "answerIndex": 0
+          },
+          {
+            "prompt": "Step 3: Simplify: 0.10x + 45 − 0.15x = 38 becomes:",
+            "choices": ["45 + 0.05x = 38", "45 − 0.05x = 38", "45 − 0.10x = 38", "45 + 0.10x = 38"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 4: Solve 45 − 0.05x = 38. Then 0.05x equals:",
+            "choices": ["5", "6", "7", "8"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Final: A rabbit on a controlled diet is fed daily 300 grams of a mixture of two foods, food X and food Y. Food X contains 10 percent protein and food Y contains 15 percent protein. If the rabbit's diet provides exactly 38 grams of protein daily, how many grams of food X are in the mixture?",
+            "choices": ["100", "140", "150", "160", "200"],
+            "answerIndex": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-speed-conversion",
+      "section": "quant",
+      "tags": ["rates", "unit-conversion", "distance"],
+      "cheatsheet": {
+        "title": "Speed and Unit Conversions",
+        "body": "Speed = Distance / Time. Always ensure consistent units. Convert 1 min 48 sec to hours: 1 min 48 sec = 60 + 48 = 108 seconds = 108/3600 hours = 0.03 hours. Convert 2,400 meters to km: 2,400/1,000 = 2.4 km. Speed = 2.4 km / 0.03 hr = 80 km/hr.",
+        "example": "2,400m in 1:48 = 2.4km in 0.03hr = 80 km/hr",
+        "keyFormulas": ["1 km = 1,000 m", "1 hr = 3,600 sec", "Speed = Distance/Time"]
+      },
+      "flashcard": {
+        "front": "A car travels 2,400 meters in 1 minute 48 seconds. What is the speed in km/hr?",
+        "back": "80 km/hr — Convert: 108 sec = 0.03 hr, 2,400 m = 2.4 km. Speed = 2.4/0.03 = 80"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: Convert time. 1 minute 48 seconds equals how many seconds total?",
+            "choices": ["88", "98", "108", "118"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 2: Convert 108 seconds to hours: 108/3600 =",
+            "choices": ["0.01 hr", "0.02 hr", "0.03 hr", "0.04 hr"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 3: Convert 2,400 meters to kilometers:",
+            "choices": ["0.24 km", "2.4 km", "24 km", "240 km"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 4: Speed = distance / time = 2.4 / 0.03 =",
+            "choices": ["60", "70", "80", "90"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Final: A car traveling at a constant speed took 1 minute 48 seconds to travel the distance between a certain road sign and the beginning of a roadwork area. If the distance between the road sign and the beginning of the roadwork area was 2,400 meters, then the car was traveling at what speed, in kilometers per hour? (1 kilometer = 1,000 meters)",
+            "choices": ["50", "60", "80", "90", "100"],
+            "answerIndex": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-average-salary",
+      "section": "quant",
+      "tags": ["averages", "arithmetic", "statistics"],
+      "cheatsheet": {
+        "title": "Weighted Average Calculation",
+        "body": "Average = Total Sum / Count. For weighted averages: Sum = (value₁ × count₁) + (value₂ × count₂) + ... For salaries: 2($14,000) + 1($16,000) + 3($17,000) = $28,000 + $16,000 + $51,000 = $95,000. Average = $95,000 / 6 = $15,833.33 ≈ $15,800.",
+        "example": "6 employees: 2×$14K + 1×$16K + 3×$17K = $95K. Average = $95K/6 ≈ $15,800",
+        "keyFormulas": ["Average = Sum/Count", "Weighted sum = Σ(value × frequency)"]
+      },
+      "flashcard": {
+        "front": "6 employees earn: 2 at $14K, 1 at $16K, 3 at $17K. What's the average salary?",
+        "back": "≈$15,800 — Total = $95,000, Average = $95,000/6 = $15,833"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: Total salary = 2($14,000) + 1($16,000) + 3($17,000) equals:",
+            "choices": ["$92,000", "$94,000", "$95,000", "$97,000"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 2: Average salary = total / 6 = $95,000 / 6 ≈",
+            "choices": ["$15,200", "$15,500", "$15,833", "$16,400"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 3: $15,833 is closest to:",
+            "choices": ["$15,200", "$15,500", "$15,800", "$16,400"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Final: A certain bakery has 6 employees. It pays annual salaries of $14,000 to each of 2 employees, $16,000 to 1 employee, and $17,000 to each of the remaining 3 employees. The average (arithmetic mean) annual salary of these employees is closest to which of the following?",
+            "choices": ["$15,200", "$15,500", "$15,800", "$16,000", "$16,400"],
+            "answerIndex": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-company-employees",
+      "section": "quant",
+      "tags": ["algebra", "systems", "word-problems"],
+      "cheatsheet": {
+        "title": "Systems of Equations from Word Problems",
+        "body": "Set up variables carefully. Let p = X's part-time employees. X has 50 total, so X full-time = 50 - p. Y has 60 total and same full-time as X, so Y full-time = 50 - p, meaning Y part-time = 60 - (50 - p) = 10 + p. Condition: Y part-time = 2(X part-time) + 3. So: 10 + p = 2p + 3 → p = 7. Y part-time = 10 + 7 = 17.",
+        "example": "X: 50 employees, p part-time. Y: 60 employees, same full-time. Y PT = 2(X PT) + 3 → p = 7, Y PT = 17",
+        "keyFormulas": ["Part-time + Full-time = Total", "Set up equations from each constraint"]
+      },
+      "flashcard": {
+        "front": "Company X (50 emp) and Y (60 emp) have same full-time count. Y has 3 more than twice X's part-time. How many part-time does Y have?",
+        "back": "17 — Let X part-time = p. Y part-time = 10+p. Solve 10+p = 2p+3 → p=7, so Y has 17"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: Let Company X have p part-time employees. Then Company X has how many full-time employees?",
+            "choices": ["50 + p", "50 − p", "p − 50", "50p"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 2: Company Y has 60 employees and the same number of full-time employees as X. So Company Y has how many part-time employees?",
+            "choices": ["10 + p", "10 − p", "60 − p", "50 + p"],
+            "answerIndex": 0
+          },
+          {
+            "prompt": "Step 3: The condition says: Y part-time = 2(X part-time) + 3. That equation is:",
+            "choices": ["10 + p = 2p + 3", "10 + p = 2p − 3", "10 − p = 2p + 3", "60 − p = 2p + 3"],
+            "answerIndex": 0
+          },
+          {
+            "prompt": "Step 4: Solve 10 + p = 2p + 3. Then p =",
+            "choices": ["5", "6", "7", "8"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 5: Then Company Y part-time = 10 + p =",
+            "choices": ["15", "16", "17", "18"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Final: Company X has 50 employees and Company Y has 60 employees. Both companies have the same number of full-time employees, but Company Y has 3 more than twice the number of part-time employees that Company X has. How many part-time employees does Company Y have?",
+            "choices": ["3", "7", "14", "17", "20"],
+            "answerIndex": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-units-digit",
+      "section": "quant",
+      "tags": ["number-theory", "units-digit", "patterns"],
+      "cheatsheet": {
+        "title": "Units Digit Patterns",
+        "body": "Units digit of n² depends only on units digit of n. Pattern: 0²→0, 1²→1, 2²→4, 3²→9, 4²→6, 5²→5, 6²→6, 7²→9, 8²→4, 9²→1. If a² ends in 9, then a ends in 3 or 7. If (a+1)² ends in 4, then a+1 ends in 2 or 8. Test: If a ends in 3, a+1 ends in 4, and 4² = 16 (ends in 6, not 4). If a ends in 7, a+1 ends in 8, and 8² = 64 (ends in 4). So a ends in 7, making a+2 end in 9, and 9² = 81 (ends in 1).",
+        "example": "a² ends in 9, (a+1)² ends in 4 → a ends in 7 → (a+2)² ends in 1",
+        "keyFormulas": ["Units digit of n² cycles: 0,1,4,9,6,5,6,9,4,1"]
+      },
+      "flashcard": {
+        "front": "If a² ends in 9 and (a+1)² ends in 4, what does (a+2)² end in?",
+        "back": "1 — a must end in 7 (since 7²=49 ends in 9, 8²=64 ends in 4), so a+2 ends in 9, and 9²=81 ends in 1"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: If a² ends in 9, then a must end in:",
+            "choices": ["1 or 9", "3 or 7", "2 or 8", "4 or 6"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 2: Test a ending in 3. Then (a+1) ends in 4, so (a+1)² ends in:",
+            "choices": ["4", "6", "8", "0"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 3: Since (a+1)² must end in 4, a cannot end in 3, so a must end in:",
+            "choices": ["1", "5", "7", "9"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 4: If a ends in 7, then a+2 ends in 9, so (a+2)² ends in:",
+            "choices": ["1", "3", "5", "9"],
+            "answerIndex": 0
+          },
+          {
+            "prompt": "Final: If a is a positive integer, and if the units digit of a² is 9 and the units digit of (a+1)² is 4, what is the units digit of (a+2)²?",
+            "choices": ["1", "3", "5", "6", "14"],
+            "answerIndex": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-exponent-system",
+      "section": "quant",
+      "tags": ["exponents", "systems", "logarithms"],
+      "cheatsheet": {
+        "title": "Solving Exponential Systems",
+        "body": "Convert to same base and equate exponents. (2^x)(2^y) = 8 → 2^(x+y) = 2³ → x+y = 3. (9^x)(3^y) = 81 → (3²)^x · 3^y = 3⁴ → 3^(2x+y) = 3⁴ → 2x+y = 4. System: x+y=3 and 2x+y=4. Subtract: x = 1. Then y = 2. Verify: 2¹·2² = 8 ✓ and 9¹·3² = 81 ✓.",
+        "example": "2^x · 2^y = 8 and 9^x · 3^y = 81 → x+y=3, 2x+y=4 → (x,y) = (1,2)",
+        "keyFormulas": ["a^m · a^n = a^(m+n)", "9 = 3², 81 = 3⁴, 8 = 2³"]
+      },
+      "flashcard": {
+        "front": "If (2^x)(2^y) = 8 and (9^x)(3^y) = 81, what is (x, y)?",
+        "back": "(1, 2) — From first: x+y=3. From second: 2x+y=4. Solve: x=1, y=2"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: (2^x)(2^y) = 8 can be combined as 2^(x+y) = 8 = 2³, so:",
+            "choices": ["x + y = 2", "x + y = 3", "x + y = 4", "x + y = 8"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 2: (9^x)(3^y) = 81. Rewrite 9^x as (3²)^x = 3^(2x). Then the left side becomes 3^(2x+y). Since 81 = 3⁴, we get:",
+            "choices": ["2x + y = 3", "2x + y = 4", "2x + y = 5", "2x + y = 6"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 3: Solve the system: x+y=3 and 2x+y=4. Subtract the first from the second to get x =",
+            "choices": ["0", "1", "2", "3"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 4: If x=1 and x+y=3, then y=",
+            "choices": ["1", "2", "3", "4"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Final: If (2^x)(2^y) = 8 and (9^x)(3^y) = 81, then (x, y) =",
+            "choices": ["(1, 2)", "(2, 1)", "(1, 1)", "(2, 2)", "(1, 3)"],
+            "answerIndex": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-ratio-expression",
+      "section": "quant",
+      "tags": ["ratios", "algebra", "fractions"],
+      "cheatsheet": {
+        "title": "Working with Ratios",
+        "body": "If x/y = a/b, represent x and y as x = ak, y = bk for some constant k. Then expressions involving x and y can be simplified. For x/y = 2/3: Let x = 2k, y = 3k. Then (x-y)/x = (2k-3k)/(2k) = -k/(2k) = -1/2.",
+        "example": "x/y = 2/3 → x=2k, y=3k → (x-y)/x = (2k-3k)/2k = -1/2",
+        "keyFormulas": ["If x/y = a/b, then x = ak and y = bk", "(x-y)/x = 1 - y/x"]
+      },
+      "flashcard": {
+        "front": "If x/y = 2/3, what is (x-y)/x?",
+        "back": "-1/2 — Let x=2k, y=3k. Then (x-y)/x = (2k-3k)/2k = -k/2k = -1/2"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: If x/y = 2/3, we can represent x and y as:",
+            "choices": ["x=2k, y=3k", "x=3k, y=2k", "x=2k, y=k", "x=k, y=3k"],
+            "answerIndex": 0
+          },
+          {
+            "prompt": "Step 2: Compute (x−y)/x using x=2k and y=3k:",
+            "choices": ["(2k−3k)/(2k) = −1/2", "(2k−3k)/(3k) = −1/3", "(3k−2k)/(2k) = 1/2", "(3k−2k)/(3k) = 1/3"],
+            "answerIndex": 0
+          },
+          {
+            "prompt": "Final: If x/y = 2/3, then (x − y)/x =",
+            "choices": ["−1/2", "−1/3", "1/3", "1/2", "5/2"],
+            "answerIndex": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-parabola-minimum",
+      "section": "quant",
+      "tags": ["quadratics", "optimization", "vertex"],
+      "cheatsheet": {
+        "title": "Finding Minimum of Quadratic Functions",
+        "body": "For y = a + (x - h)², the minimum occurs when (x - h)² = 0, i.e., x = h. The minimum value is y = a. For y = 4 + (x - 3)², the minimum is at x = 3, giving y = 4. The parabola opens upward (coefficient of squared term is positive), so vertex is minimum.",
+        "example": "y = 4 + (x-3)² is minimized when x = 3, giving y_min = 4",
+        "keyFormulas": ["y = a + (x-h)² has vertex at (h, a)", "Minimum of square is 0"]
+      },
+      "flashcard": {
+        "front": "If y = 4 + (x-3)², for what value of x is y minimum?",
+        "back": "x = 3 — The square (x-3)² is minimized at 0 when x = 3"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: y = 4 + (x − 3)² is a parabola. The square (x − 3)² is smallest when x equals:",
+            "choices": ["0", "3", "4", "−3"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 2: The smallest possible value of (x − 3)² is:",
+            "choices": ["−1", "0", "1", "3"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 3: So y is minimized when x = 3 (because then y = 4 + 0). Therefore, the minimizing x is:",
+            "choices": ["14", "13", "0", "3"],
+            "answerIndex": 3
+          },
+          {
+            "prompt": "Final: If y = 4 + (x − 3)², then y is least when x =",
+            "choices": ["14", "13", "0", "3", "4"],
+            "answerIndex": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-continued-fraction",
+      "section": "quant",
+      "tags": ["fractions", "order-of-operations", "simplification"],
+      "cheatsheet": {
+        "title": "Evaluating Continued Fractions",
+        "body": "Work from inside out. For 1/(1 + 1/(2 + 1/3)): Step 1: 2 + 1/3 = 7/3. Step 2: 1/(7/3) = 3/7. Step 3: 1 + 3/7 = 10/7. Step 4: 1/(10/7) = 7/10.",
+        "example": "1/(1 + 1/(2 + 1/3)) = 1/(1 + 3/7) = 1/(10/7) = 7/10",
+        "keyFormulas": ["1/(a/b) = b/a", "a + b/c = (ac + b)/c"]
+      },
+      "flashcard": {
+        "front": "What is 1/(1 + 1/(2 + 1/3))?",
+        "back": "7/10 — Work inside out: 2+1/3=7/3, then 1÷(7/3)=3/7, then 1+3/7=10/7, then 1÷(10/7)=7/10"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": [
+          {
+            "prompt": "Step 1: Start inside: 2 + 1/3 equals:",
+            "choices": ["5/3", "6/3", "7/3", "8/3"],
+            "answerIndex": 2
+          },
+          {
+            "prompt": "Step 2: Now compute 1/(2 + 1/3). Since 2 + 1/3 = 7/3, the reciprocal is:",
+            "choices": ["7/3", "3/7", "7/10", "10/7"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Step 3: Now compute 1 + 3/7 =",
+            "choices": ["10/7", "7/10", "4/7", "11/7"],
+            "answerIndex": 0
+          },
+          {
+            "prompt": "Step 4: Finally take the reciprocal: 1/(10/7) =",
+            "choices": ["10/7", "7/10", "3/10", "6/7"],
+            "answerIndex": 1
+          },
+          {
+            "prompt": "Final: 1/(1 + 1/(2 + 1/3)) =",
+            "choices": ["3/10", "7/10", "6/7", "10/7", "10/3"],
+            "answerIndex": 1
+          }
+        ]
+      }
     }
   ]
 }
