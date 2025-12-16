@@ -1,6 +1,6 @@
 # GMAT Study PWA v3
 
-A modern, offline-first study companion.
+A modern, offline-first study companion. Created by Joe Viola with assistance from ChatGPT-5.2 & Gemini 3 Pro.
 
 ## Features
 * **Beams Background**: A fluid 3D background powered by vanilla Three.js.
