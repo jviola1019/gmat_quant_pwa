@@ -1,11 +1,12 @@
 /**
  * GMAT Study PWA - Main Application
- * Version 6.0 - Multiple Choice Quiz System
+ * Version 7.0 - Enhanced Quiz with Hints
  *
  * Features:
  * - Multiple choice quiz with step-by-step answering
- * - Quizlet-style flashcards with flip animation and reset
- * - Organized cheatsheet by category
+ * - Hints shown after first wrong attempt
+ * - Quizlet-style flashcards with flip animation
+ * - Organized cheatsheet with full questions and step explanations
  * - 2 strikes on same step = quiz restart
  */
 
@@ -24,7 +25,8 @@
       sIndex: 0,
       stepStrikes: 0,
       filter: 'all',
-      selectedAnswer: null
+      selectedAnswer: null,
+      showHint: false
     },
     flashcard: {
       index: 0,
@@ -60,6 +62,7 @@
       if (state.view === 'quiz') {
         state.quiz.active = false;
         state.quiz.started = false;
+        state.quiz.showHint = false;
       }
       if (state.view === 'flashcards') {
         state.flashcard.flipped = false;
@@ -85,7 +88,7 @@
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // CHEATSHEET VIEW
+  // CHEATSHEET VIEW - Enhanced with Full Question Display
   // ═══════════════════════════════════════════════════════════════
   function renderCheatsheet() {
     const container = document.createElement('div');
@@ -95,7 +98,7 @@
     const sections = {
       quant: { title: 'Quantitative Reasoning', items: [] },
       verbal: { title: 'Verbal Reasoning', items: [] },
-      integrated: { title: 'Integrated Reasoning', items: [] }
+      'data-insights': { title: 'Data Insights', items: [] }
     };
 
     state.data.forEach(item => {
@@ -119,6 +122,20 @@
         const card = document.createElement('div');
         card.className = 'item-card';
 
+        // Build step-by-step explanation
+        let stepsHtml = '';
+        if (item.cheatsheet.steps && item.cheatsheet.steps.length > 0) {
+          stepsHtml = `
+            <div class="item-steps">
+              <span class="steps-label">Step-by-Step Solution:</span>
+              <ol class="steps-list">
+                ${item.cheatsheet.steps.map(step => `<li>${step}</li>`).join('')}
+              </ol>
+            </div>
+          `;
+        }
+
+        // Build key formulas
         let keyFormulasHtml = '';
         if (item.cheatsheet.keyFormulas && item.cheatsheet.keyFormulas.length > 0) {
           keyFormulasHtml = `
@@ -138,9 +155,11 @@
               ${item.tags.map(tag => `<span class="item-tag">${tag}</span>`).join('')}
             </div>
           </div>
+          ${item.fullQuestion ? `<div class="item-question"><strong>Question:</strong> ${item.fullQuestion}</div>` : ''}
           <div class="item-body">${item.cheatsheet.body}</div>
-          ${item.cheatsheet.example ? `<div class="item-example"><strong>Example:</strong> ${item.cheatsheet.example}</div>` : ''}
+          ${stepsHtml}
           ${keyFormulasHtml}
+          ${item.finalAnswer ? `<div class="item-answer"><strong>Answer:</strong> ${item.finalAnswer}</div>` : ''}
         `;
         cardList.appendChild(card);
       });
@@ -207,12 +226,12 @@
 
       <div class="fc-controls">
         <button class="fc-nav-btn" id="fc-prev" ${state.flashcard.index === 0 ? 'disabled' : ''} aria-label="Previous card">
-          <span class="fc-nav-icon">&lt;</span>
+          <span class="fc-nav-icon">&larr;</span>
           <span class="fc-nav-text">Previous</span>
         </button>
         <button class="fc-nav-btn primary" id="fc-next" aria-label="Next card">
           <span class="fc-nav-text">${state.flashcard.index === deck.length - 1 ? 'Finish' : 'Next'}</span>
-          <span class="fc-nav-icon">&gt;</span>
+          <span class="fc-nav-icon">&rarr;</span>
         </button>
       </div>
 
@@ -327,7 +346,7 @@
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // QUIZ VIEW - Multiple Choice with Section Tabs
+  // QUIZ VIEW - Multiple Choice with Hints
   // ═══════════════════════════════════════════════════════════════
   function renderQuiz() {
     // Phase 1: Initial START screen
@@ -374,26 +393,26 @@
           </svg>
         </div>
         <h1 class="quiz-title">GMAT Quiz</h1>
-        <p class="quiz-subtitle">Multiple choice problem solving</p>
+        <p class="quiz-subtitle">Step-by-step problem solving</p>
       </div>
 
       <button class="quiz-start-btn" id="quiz-start">
-        <span class="start-btn-text">START</span>
+        <span class="start-btn-text">Start Quiz</span>
         <span class="start-btn-icon">&rarr;</span>
       </button>
 
       <div class="quiz-rules">
         <div class="rule-item">
-          <span class="rule-icon">&#x1F4DD;</span>
-          <span class="rule-text">Step-by-step multiple choice</span>
+          <span class="rule-icon">1</span>
+          <span class="rule-text">Answer each step to unlock the next</span>
         </div>
         <div class="rule-item">
-          <span class="rule-icon">&#x26A0;</span>
-          <span class="rule-text">2 wrong answers on a step = restart</span>
+          <span class="rule-icon">2</span>
+          <span class="rule-text">Get a hint after your first wrong answer</span>
         </div>
         <div class="rule-item">
-          <span class="rule-icon">&#x1F3AF;</span>
-          <span class="rule-text">Complete all steps to finish</span>
+          <span class="rule-icon">3</span>
+          <span class="rule-text">Two wrong on one step = restart quiz</span>
         </div>
       </div>
     `;
@@ -416,7 +435,7 @@
       all: state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0).length,
       quant: state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0 && i.section === 'quant').length,
       verbal: state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0 && i.section === 'verbal').length,
-      integrated: state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0 && i.section === 'integrated').length
+      'data-insights': state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0 && i.section === 'data-insights').length
     };
 
     container.innerHTML = `
@@ -436,9 +455,9 @@
           <span class="section-tab-name">Verbal</span>
           <span class="section-tab-count">${counts.verbal} questions</span>
         </button>
-        <button class="section-tab ${state.quiz.filter === 'integrated' ? 'active' : ''}" data-section="integrated">
-          <span class="section-tab-name">Integrated</span>
-          <span class="section-tab-count">${counts.integrated} questions</span>
+        <button class="section-tab ${state.quiz.filter === 'data-insights' ? 'active' : ''}" data-section="data-insights">
+          <span class="section-tab-name">Data Insights</span>
+          <span class="section-tab-count">${counts['data-insights']} questions</span>
         </button>
       </div>
 
@@ -472,11 +491,12 @@
     });
   }
 
-  // Quiz Phase 3: Active Question (Multiple Choice)
+  // Quiz Phase 3: Active Question (Multiple Choice with Hints)
   function renderQuizQuestion(qItem) {
     const step = qItem.quiz.steps[state.quiz.sIndex];
     const totalSteps = qItem.quiz.steps.length;
     const totalQuestions = state.quiz.queue.length;
+    const isLastStep = state.quiz.sIndex === totalSteps - 1;
 
     // Progress calculation
     const progressPct = ((state.quiz.qIndex + (state.quiz.sIndex / totalSteps)) / totalQuestions) * 100;
@@ -492,6 +512,14 @@
       </button>
     `).join('');
 
+    // Show hint if available and first wrong
+    const hintHtml = (state.quiz.showHint && step.hint) ? `
+      <div class="quiz-hint">
+        <span class="hint-icon">&#x1F4A1;</span>
+        <span class="hint-text">${step.hint}</span>
+      </div>
+    ` : '';
+
     container.innerHTML = `
       <div class="quiz-header">
         <div class="quiz-progress-bar">
@@ -499,7 +527,7 @@
         </div>
         <div class="quiz-meta">
           <span class="quiz-question-num">Question ${state.quiz.qIndex + 1} of ${totalQuestions}</span>
-          <span class="quiz-step-num">Step ${state.quiz.sIndex + 1} of ${totalSteps}</span>
+          <span class="quiz-step-num">${isLastStep ? 'Final Step' : `Step ${state.quiz.sIndex + 1} of ${totalSteps}`}</span>
         </div>
       </div>
 
@@ -518,8 +546,10 @@
           ${choicesHtml}
         </div>
 
+        ${hintHtml}
+
         <div class="quiz-strike-indicator">
-          ${state.quiz.stepStrikes > 0 ? `<span class="strike-warning">${state.quiz.stepStrikes}/2 attempts</span>` : ''}
+          ${state.quiz.stepStrikes > 0 ? `<span class="strike-warning">Attempt ${state.quiz.stepStrikes + 1} of 2</span>` : ''}
         </div>
 
         <div class="quiz-feedback" id="quiz-feedback"></div>
@@ -580,6 +610,7 @@
         feedback.textContent = 'Correct!';
         feedback.style.display = 'block';
         state.quiz.stepStrikes = 0;
+        state.quiz.showHint = false;
 
         submitBtn.disabled = true;
 
@@ -594,7 +625,7 @@
             state.quiz.sIndex = 0;
           }
           render();
-        }, 1200);
+        }, 1000);
       } else {
         // Wrong answer
         state.quiz.stepStrikes++;
@@ -604,8 +635,8 @@
           feedback.className = 'quiz-feedback error restart';
           feedback.innerHTML = `
             <span class="feedback-icon">&#x2717;</span>
-            <span class="feedback-text">2 incorrect attempts. Restarting quiz...</span>
-            <span class="feedback-answer">Correct answer: <strong>${step.choices[step.answerIndex]}</strong></span>
+            <span class="feedback-text">Two incorrect attempts. Restarting quiz...</span>
+            <span class="feedback-answer">The correct answer was: <strong>${step.choices[step.answerIndex]}</strong></span>
           `;
           feedback.style.display = 'block';
 
@@ -616,26 +647,21 @@
             state.quiz.started = true;
             state.quiz.stepStrikes = 0;
             state.quiz.selectedAnswer = null;
+            state.quiz.showHint = false;
             render();
-          }, 2500);
+          }, 3000);
         } else {
-          // First strike - allow retry
+          // First strike - show hint and allow retry
+          state.quiz.showHint = true;
           feedback.className = 'quiz-feedback error';
-          feedback.textContent = 'Incorrect. Try again (1 attempt left).';
+          feedback.textContent = 'Not quite. Try again!';
           feedback.style.display = 'block';
 
           // Re-enable choices for retry
           setTimeout(() => {
             state.quiz.selectedAnswer = null;
-            choicesContainer.querySelectorAll('.quiz-choice-btn').forEach(btn => {
-              btn.disabled = false;
-              btn.classList.remove('selected', 'wrong');
-              // Keep correct answer hidden until they get it right or fail twice
-              btn.classList.remove('correct');
-            });
-            submitBtn.disabled = true;
-            feedback.style.display = 'none';
-          }, 1500);
+            render(); // Re-render to show hint
+          }, 1200);
         }
       }
     };
@@ -649,6 +675,7 @@
         state.quiz.started = false;
         state.quiz.stepStrikes = 0;
         state.quiz.selectedAnswer = null;
+        state.quiz.showHint = false;
         render();
       }
     });
@@ -726,6 +753,7 @@
     state.quiz.sIndex = 0;
     state.quiz.stepStrikes = 0;
     state.quiz.selectedAnswer = null;
+    state.quiz.showHint = false;
     state.quiz.active = true;
     render();
   }
