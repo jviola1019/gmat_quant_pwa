@@ -12,8 +12,9 @@ A modern, interactive Progressive Web Application for GMAT quantitative reasonin
 - **18 verified GMAT-style questions**: Covering exponents, factorials, number theory, algebra, word problems, and more
 - **Step-by-step problem solving**: Questions are broken into 3-6 logical steps that guide you through the reasoning process
 - **Multiple choice format**: Select from 4-5 answer choices per step
+- **Hints after first mistake**: Get a step wrong once, and a helpful hint appears to guide you to the correct answer
 - **Strike system**: Get a step wrong twice, and the quiz restarts with randomized questions to ensure mastery
-- **Section filtering**: Practice all questions or focus on specific categories (Quantitative, Verbal, Integrated Reasoning)
+- **Section filtering**: Practice all questions or focus on specific categories (Quantitative, Verbal, Data Insights)
 - **Fisher-Yates shuffle**: Questions appear in random order each time
 
 ### Quizlet-Style Flashcards
@@ -24,8 +25,11 @@ A modern, interactive Progressive Web Application for GMAT quantitative reasonin
 - **Reset functionality**: Start over at any time
 
 ### Organized Cheatsheet
-- **Grouped by section**: Questions organized under Quantitative, Verbal, and Integrated Reasoning
-- **Concept cards**: Each card shows the concept title, detailed explanation, worked example, and key formulas
+- **Grouped by section**: Questions organized under Quantitative, Verbal, and Data Insights
+- **Full question display**: Each card shows the complete question text at the top
+- **Step-by-step solutions**: Numbered walkthrough of the solving process
+- **Key formulas**: Essential formulas highlighted for quick reference
+- **Final answer**: Clear display of the correct answer
 - **Tag system**: Quick visual identification of topic areas (exponents, algebra, word-problems, etc.)
 
 ### Modern UI/UX
@@ -52,12 +56,13 @@ A modern, interactive Progressive Web Application for GMAT quantitative reasonin
 
 ### Quiz Instructions
 1. Click **START** on the quiz screen
-2. Select a section (All, Quantitative, Verbal, or Integrated)
+2. Select a section (All, Quantitative, Verbal, or Data Insights)
 3. Click **Begin Quiz**
 4. Read the step prompt and select your answer
 5. Click **Check Answer** to verify
-6. Complete all steps to move to the next question
-7. **Warning**: Two wrong answers on the same step restarts the quiz!
+6. If you get it wrong, a **hint** will appear to help you!
+7. Complete all steps to move to the next question
+8. **Warning**: Two wrong answers on the same step restarts the quiz!
 
 ### Flashcard Instructions
 1. Click on the card to flip between question and answer
@@ -98,14 +103,14 @@ A modern, interactive Progressive Web Application for GMAT quantitative reasonin
 ```
 gmat_quant_pwa/
 ├── index.html          # Main HTML entry point
-├── app.js              # Core application logic (v6.0 - MCQ system)
+├── app.js              # Core application logic (v7.0 - Hints & Enhanced Cheatsheet)
 ├── styles.css          # Complete styling (Material Design 3, square corners)
 ├── bg.js               # Three.js Beams background animation
 ├── sw.js               # Service Worker for offline caching
 ├── manifest.json       # PWA manifest for installability
 ├── offline.html        # Offline fallback page
 ├── data/
-│   └── content.json    # All quiz questions, flashcards, and cheatsheet content
+│   └── content.json    # All quiz questions with hints, flashcards, and step-by-step solutions
 └── icons/
     ├── icon-192.png    # PWA icon (192x192)
     ├── icon-512.png    # PWA icon (512x512)
@@ -122,13 +127,18 @@ All study content is stored in `data/content.json`. Each item follows this struc
 ```json
 {
   "id": "unique-id",
-  "section": "quant|verbal|integrated",
+  "section": "quant|verbal|data-insights",
   "tags": ["topic-tag"],
+  "fullQuestion": "The complete question text",
+  "finalChoices": ["A", "B", "C", "D", "E"],
+  "finalAnswer": "Correct answer",
+  "finalAnswerIndex": 0,
   "cheatsheet": {
     "title": "Concept Title",
     "body": "Detailed explanation text",
     "example": "Worked example",
-    "keyFormulas": ["formula1", "formula2"]
+    "keyFormulas": ["formula1", "formula2"],
+    "steps": ["Step 1 explanation", "Step 2 explanation"]
   },
   "flashcard": {
     "front": "Question text",
@@ -140,7 +150,8 @@ All study content is stored in `data/content.json`. Each item follows this struc
       {
         "prompt": "Step question text",
         "choices": ["A", "B", "C", "D"],
-        "answerIndex": 0
+        "answerIndex": 0,
+        "hint": "Helpful hint if you get it wrong"
       }
     ]
   }
@@ -221,7 +232,15 @@ const CONFIG = {
 
 ## Version History
 
-### v6.0 (Current) - Multiple Choice & Content Overhaul
+### v7.0 (Current) - Quiz Hints & Enhanced Cheatsheet
+- **Quiz hints system**: Helpful hints appear after first wrong answer on any step
+- **Full question display**: Cheatsheet now shows complete question text
+- **Step-by-step solutions**: Numbered walkthrough of solving process in cheatsheet
+- **Data Insights section**: Renamed from "Integrated" to match current GMAT terminology
+- **Enhanced content schema**: Added fullQuestion, finalChoices, finalAnswer, and hint fields
+- **Improved styling**: New CSS for hints, steps, and answer display
+
+### v6.0 - Multiple Choice & Content Overhaul
 - **18 new GMAT-style questions** with verified mathematical accuracy
 - **Multiple choice format** replacing fill-in-the-blank
 - **Square corner UI design** for modern appearance

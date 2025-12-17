@@ -1,6 +1,6 @@
 /**
  * GMAT Study PWA - Styles
- * Version 6.0 - Square Corners & Multiple Choice UI
+ * Version 7.0 - Quiz Hints & Enhanced Cheatsheet
  * Material Design 3 inspired with modern enhancements
  */
 
@@ -395,6 +395,114 @@ body {
 
 .formulas-list li:last-child {
   margin-bottom: 0;
+}
+
+/* Cheatsheet - Full Question Display */
+.item-question {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: rgba(168, 199, 250, 0.06);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--md-primary);
+}
+
+.item-question-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  color: var(--md-primary);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.item-question-text {
+  font-family: var(--font-brand);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--md-on-surface);
+}
+
+/* Cheatsheet - Step-by-Step Solution */
+.item-steps {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-md);
+}
+
+.steps-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  color: var(--md-tertiary);
+  display: block;
+  margin-bottom: 12px;
+}
+
+.steps-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.steps-list li {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--md-on-surface);
+  opacity: 0.9;
+}
+
+.steps-list li::before {
+  content: counter(step);
+  counter-increment: step;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  border-radius: var(--radius-xs);
+  background: var(--md-surface-container-high);
+  color: var(--md-primary);
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.item-steps {
+  counter-reset: step;
+}
+
+/* Cheatsheet - Answer Display */
+.item-answer {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: var(--md-success-container);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.answer-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  color: var(--md-success);
+}
+
+.answer-value {
+  font-family: var(--font-brand);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--md-success);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1049,6 +1157,31 @@ body {
   background: var(--md-error-container);
   padding: 4px 12px;
   border-radius: var(--radius-xs);
+}
+
+/* Quiz Hint - Shows after first wrong answer */
+.quiz-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  background: rgba(213, 189, 226, 0.12);
+  border: 1px solid rgba(213, 189, 226, 0.25);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.3s ease;
+}
+
+.hint-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.hint-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--md-tertiary);
 }
 
 .quiz-feedback {
