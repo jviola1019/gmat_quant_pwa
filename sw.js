@@ -1,15 +1,16 @@
 /**
  * GMAT Study PWA - Service Worker
- * Version 6.0 - Multiple Choice Quiz System
+ * Version 8.0 - Parameterized Questions
  */
 
-const CACHE_NAME = 'gmat-v6';
+const CACHE_NAME = 'gmat-v9';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './styles.css',
   './app.js',
   './bg.js',
+  './questionTemplates.js',
   './data/content.json',
   './manifest.json',
   './icons/icon-192.png',

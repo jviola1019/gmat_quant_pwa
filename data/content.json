@@ -1,10 +1,11 @@
 {
   "meta": {
     "title": "GMAT Study PWA",
-    "version": "7.0",
-    "questionCount": 18,
+    "version": "8.0",
+    "questionCount": 22,
     "format": "multiple-choice",
-    "sections": ["quant", "verbal", "data-insights"]
+    "sections": ["quant", "verbal", "data-insights"],
+    "parameterizedCount": 4
   },
   "items": [
     {
@@ -1066,6 +1067,253 @@
             "hint": "7/10"
           }
         ]
+      }
+    },
+    {
+      "id": "p-simple-percentage",
+      "section": "quant",
+      "tags": ["percentages", "arithmetic", "parameterized"],
+      "isParameterized": true,
+      "fullQuestionTemplate": "What is {{percent}}% of {{base}}?",
+      "template": {
+        "variables": {
+          "percent": { "type": "choice", "choices": [10, 15, 20, 25, 30, 40, 50, 75] },
+          "base": { "type": "choice", "choices": [80, 100, 120, 160, 200, 240, 400, 500] }
+        },
+        "derived": {
+          "answer": "percent * base / 100"
+        },
+        "constraints": [
+          "percent * base % 100 === 0"
+        ],
+        "steps": [
+          {
+            "promptTemplate": "Step 1: To find {{percent}}% of a number, we multiply by what decimal?",
+            "correctAnswerExpr": "percent / 100",
+            "distractorExprs": ["percent / 10", "percent", "percent / 1000"],
+            "hintTemplate": "{{percent}}% means {{percent}}/100 = {{percent / 100}}"
+          },
+          {
+            "promptTemplate": "Step 2: {{percent / 100}} × {{base}} = ?",
+            "correctAnswerExpr": "percent * base / 100",
+            "distractorExprs": ["percent * base / 10", "percent + base", "base - percent"],
+            "hintTemplate": "Multiply {{percent / 100}} by {{base}}"
+          },
+          {
+            "promptTemplate": "Final: What is {{percent}}% of {{base}}?",
+            "correctAnswerExpr": "percent * base / 100",
+            "distractorExprs": ["percent * base / 10", "percent + base", "base / percent * 10", "percent * base / 1000"],
+            "choiceCount": 5,
+            "hintTemplate": "{{percent}}% of {{base}} = {{percent / 100}} × {{base}} = {{percent * base / 100}}"
+          }
+        ],
+        "finalAnswerExpr": "percent * base / 100"
+      },
+      "cheatsheet": {
+        "title": "Percentage Calculations",
+        "body": "To find X% of a number, convert the percentage to a decimal (divide by 100) and multiply.",
+        "steps": [
+          "Convert percentage to decimal: X% = X/100",
+          "Multiply: (X/100) × Base = Answer"
+        ],
+        "keyFormulas": ["X% of N = (X/100) × N"]
+      },
+      "flashcard": {
+        "front": "How do you calculate X% of a number N?",
+        "back": "Convert to decimal and multiply: (X/100) × N"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": []
+      }
+    },
+    {
+      "id": "p-distance-rate-time",
+      "section": "quant",
+      "tags": ["rates", "distance", "time", "parameterized"],
+      "isParameterized": true,
+      "fullQuestionTemplate": "A car travels {{distance}} miles in {{hours}} hours. What is the car's average speed in miles per hour?",
+      "template": {
+        "variables": {
+          "speed": { "type": "choice", "choices": [30, 40, 45, 50, 55, 60, 65, 70, 75, 80] },
+          "hours": { "type": "choice", "choices": [2, 3, 4, 5, 6] }
+        },
+        "derived": {
+          "distance": "speed * hours"
+        },
+        "constraints": [],
+        "steps": [
+          {
+            "promptTemplate": "Step 1: The formula for average speed is:",
+            "correctAnswerExpr": "'Distance ÷ Time'",
+            "distractorExprs": ["'Distance × Time'", "'Time ÷ Distance'", "'Distance + Time'"],
+            "hintTemplate": "Speed = Distance divided by Time"
+          },
+          {
+            "promptTemplate": "Step 2: Using the formula: {{distance}} miles ÷ {{hours}} hours = ?",
+            "correctAnswerExpr": "speed",
+            "distractorExprs": ["speed + 10", "speed - 10", "speed * 2"],
+            "hintTemplate": "Divide {{distance}} by {{hours}}"
+          },
+          {
+            "promptTemplate": "Final: A car travels {{distance}} miles in {{hours}} hours. What is the average speed in mph?",
+            "correctAnswerExpr": "speed",
+            "distractorExprs": ["speed + 5", "speed - 5", "speed + 10", "speed - 10"],
+            "choiceCount": 5,
+            "hintTemplate": "Speed = {{distance}} ÷ {{hours}} = {{speed}} mph"
+          }
+        ],
+        "finalAnswerExpr": "speed"
+      },
+      "cheatsheet": {
+        "title": "Distance, Rate, and Time",
+        "body": "The fundamental relationship is: Distance = Rate × Time. Rearranging: Rate = Distance ÷ Time.",
+        "steps": [
+          "Identify what you know: distance and time",
+          "Apply formula: Speed = Distance / Time",
+          "Include units in your answer"
+        ],
+        "keyFormulas": ["Distance = Rate × Time", "Rate = Distance / Time", "Time = Distance / Rate"]
+      },
+      "flashcard": {
+        "front": "If you know distance and time, how do you find average speed?",
+        "back": "Speed = Distance ÷ Time"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": []
+      }
+    },
+    {
+      "id": "p-simple-interest",
+      "section": "quant",
+      "tags": ["interest", "percentages", "finance", "parameterized"],
+      "isParameterized": true,
+      "fullQuestionTemplate": "If ${{principal}} is invested at {{rate}}% simple annual interest, how much interest is earned after {{years}} years?",
+      "template": {
+        "variables": {
+          "principal": { "type": "choice", "choices": [1000, 2000, 2500, 3000, 4000, 5000] },
+          "rate": { "type": "choice", "choices": [2, 3, 4, 5, 6, 8, 10] },
+          "years": { "type": "choice", "choices": [2, 3, 4, 5] }
+        },
+        "derived": {
+          "interest": "principal * rate * years / 100"
+        },
+        "constraints": [],
+        "steps": [
+          {
+            "promptTemplate": "Step 1: The simple interest formula is I = P × r × t. What does 'r' represent in decimal form for {{rate}}%?",
+            "correctAnswerExpr": "rate / 100",
+            "distractorExprs": ["rate", "rate / 10", "rate / 1000"],
+            "hintTemplate": "Convert percentage to decimal: {{rate}}% = {{rate}}/100 = {{rate / 100}}"
+          },
+          {
+            "promptTemplate": "Step 2: Calculate P × r = ${{principal}} × {{rate / 100}} = ?",
+            "correctAnswerExpr": "principal * rate / 100",
+            "distractorExprs": ["principal + rate", "principal - rate", "principal / rate"],
+            "hintTemplate": "${{principal}} × {{rate / 100}} = ${{principal * rate / 100}}"
+          },
+          {
+            "promptTemplate": "Step 3: Multiply by time: ${{principal * rate / 100}} × {{years}} = ?",
+            "correctAnswerExpr": "interest",
+            "distractorExprs": ["interest + 100", "interest - 50", "interest / 2"],
+            "hintTemplate": "${{principal * rate / 100}} × {{years}} = ${{interest}}"
+          },
+          {
+            "promptTemplate": "Final: How much interest is earned on ${{principal}} at {{rate}}% simple interest after {{years}} years?",
+            "correctAnswerExpr": "interest",
+            "distractorExprs": ["interest + principal", "interest / 2", "interest * 2", "principal"],
+            "choiceCount": 5,
+            "hintTemplate": "I = P × r × t = ${{principal}} × {{rate / 100}} × {{years}} = ${{interest}}"
+          }
+        ],
+        "finalAnswerExpr": "interest"
+      },
+      "cheatsheet": {
+        "title": "Simple Interest",
+        "body": "Simple interest is calculated only on the principal amount. The formula is I = P × r × t.",
+        "steps": [
+          "Identify: Principal (P), Rate (r as decimal), Time (t in years)",
+          "Convert rate to decimal: r% = r/100",
+          "Apply formula: Interest = P × r × t"
+        ],
+        "keyFormulas": ["I = P × r × t", "r (decimal) = r% / 100"]
+      },
+      "flashcard": {
+        "front": "What is the simple interest formula?",
+        "back": "I = P × r × t where P = principal, r = rate (decimal), t = time"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": []
+      }
+    },
+    {
+      "id": "p-ratio-problem",
+      "section": "quant",
+      "tags": ["ratios", "algebra", "parameterized"],
+      "isParameterized": true,
+      "fullQuestionTemplate": "If the ratio of boys to girls in a class is {{boyRatio}}:{{girlRatio}}, and there are {{total}} students in total, how many boys are in the class?",
+      "template": {
+        "variables": {
+          "boyRatio": { "type": "choice", "choices": [2, 3, 4, 5] },
+          "girlRatio": { "type": "choice", "choices": [3, 4, 5, 7] },
+          "multiplier": { "type": "choice", "choices": [4, 5, 6, 8, 10] }
+        },
+        "derived": {
+          "total": "(boyRatio + girlRatio) * multiplier",
+          "boys": "boyRatio * multiplier",
+          "girls": "girlRatio * multiplier"
+        },
+        "constraints": [
+          "boyRatio !== girlRatio"
+        ],
+        "steps": [
+          {
+            "promptTemplate": "Step 1: In a {{boyRatio}}:{{girlRatio}} ratio, the total parts equals:",
+            "correctAnswerExpr": "boyRatio + girlRatio",
+            "distractorExprs": ["boyRatio * girlRatio", "boyRatio - girlRatio", "boyRatio"],
+            "hintTemplate": "Add the parts: {{boyRatio}} + {{girlRatio}} = {{boyRatio + girlRatio}}"
+          },
+          {
+            "promptTemplate": "Step 2: If there are {{total}} students total and {{boyRatio + girlRatio}} parts, each part equals:",
+            "correctAnswerExpr": "multiplier",
+            "distractorExprs": ["multiplier + 1", "multiplier - 1", "multiplier * 2"],
+            "hintTemplate": "{{total}} ÷ {{boyRatio + girlRatio}} = {{multiplier}} students per part"
+          },
+          {
+            "promptTemplate": "Step 3: Boys get {{boyRatio}} parts, so number of boys = {{boyRatio}} × {{multiplier}} = ?",
+            "correctAnswerExpr": "boys",
+            "distractorExprs": ["girls", "total", "boys + 5"],
+            "hintTemplate": "{{boyRatio}} × {{multiplier}} = {{boys}}"
+          },
+          {
+            "promptTemplate": "Final: If the ratio of boys to girls is {{boyRatio}}:{{girlRatio}} and there are {{total}} students, how many are boys?",
+            "correctAnswerExpr": "boys",
+            "distractorExprs": ["girls", "total - boys - 5", "boys + girlRatio", "multiplier"],
+            "choiceCount": 5,
+            "hintTemplate": "Boys = {{boyRatio}} × ({{total}} ÷ {{boyRatio + girlRatio}}) = {{boys}}"
+          }
+        ],
+        "finalAnswerExpr": "boys"
+      },
+      "cheatsheet": {
+        "title": "Ratio Problems",
+        "body": "When a quantity is divided in a ratio a:b, find the value of each 'part' by dividing the total by (a+b).",
+        "steps": [
+          "Find total parts: a + b",
+          "Find value per part: Total ÷ (a + b)",
+          "Multiply to find each portion: a × (value per part)"
+        ],
+        "keyFormulas": ["Total parts = a + b", "Each part = Total / (a + b)", "Portion = ratio × each part"]
+      },
+      "flashcard": {
+        "front": "How do you solve ratio problems like 'a:b with total T'?",
+        "back": "Find parts (a+b), divide total by parts, multiply by each ratio number"
+      },
+      "quiz": {
+        "type": "mcq",
+        "steps": []
       }
     }
   ]

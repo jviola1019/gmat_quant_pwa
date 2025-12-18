@@ -1,32 +1,60 @@
 /**
  * GMAT Study PWA - Main Application
- * Version 7.0 - Enhanced Quiz with Hints
+ * Version 8.0 - Fully Parameterized Quiz System
  *
- * Features:
- * - Multiple choice quiz with step-by-step answering
- * - Hints shown after first wrong attempt
- * - Quizlet-style flashcards with flip animation
- * - Organized cheatsheet with full questions and step explanations
- * - 2 strikes on same step = quiz restart
+ * DEVELOPER NOTES:
+ * ================
+ *
+ * QUIZ STATE MANAGEMENT:
+ * - state.quiz.queue: Array of generated questions (from QuestionTemplates)
+ * - state.quiz.qIndex: Current question index
+ * - state.quiz.sIndex: Current step index within question
+ * - state.quiz.attempts: Wrong attempts on CURRENT QUESTION (0, 1, or 2)
+ * - state.quiz.score: Number of questions answered correctly (all steps)
+ *
+ * ATTEMPT LOGIC (STRICT):
+ * - 1st wrong answer: Show "Incorrect", NO hint, allow retry
+ * - 2nd wrong answer: IMMEDIATE quiz restart
+ * - Correct answer: Move to next step (or next question if last step)
+ *
+ * RESTART TRIGGERS:
+ * - User gets 2 wrong attempts on any question
+ * - User clicks "Reset" on end screen
+ * - User quits and restarts
+ *
+ * PARAMETERIZED QUESTIONS:
+ * - All questions generated from templates in questionTemplates.js
+ * - Numbers regenerate on each attempt/restart
+ * - Seeded RNG ensures reproducibility in dev mode
+ *
+ * FLASHCARD SINGLE-CARD ENFORCEMENT:
+ * - DOM is cleared and rebuilt on each navigation
+ * - No CSS hiding, actual DOM removal
+ * - Prevents stacked/ghost cards
  */
 
 (function() {
   'use strict';
 
-  // Application State
+  // ═══════════════════════════════════════════════════════════════
+  // APPLICATION STATE
+  // ═══════════════════════════════════════════════════════════════
+
   const state = {
     view: 'cheatsheet',
-    data: [],
+    data: [],           // Static content for cheatsheet/flashcards
     quiz: {
-      active: false,
-      started: false,
-      queue: [],
-      qIndex: 0,
-      sIndex: 0,
-      stepStrikes: 0,
-      filter: 'all',
+      active: false,    // Quiz in progress
+      started: false,   // Past START screen
+      queue: [],        // Generated questions for this session
+      qIndex: 0,        // Current question index
+      sIndex: 0,        // Current step index
+      attempts: 0,      // Wrong attempts on current question (resets per question)
+      score: 0,         // Questions answered correctly
       selectedAnswer: null,
-      showHint: false
+      filter: 'all',
+      attemptNumber: 0, // Increments on each restart (for new seeds)
+      baseSeed: Date.now()
     },
     flashcard: {
       index: 0,
@@ -39,30 +67,70 @@
   const main = document.getElementById('main');
   const tabs = document.querySelectorAll('.tab-btn');
 
-  // Initialize Application
+  // ═══════════════════════════════════════════════════════════════
+  // INITIALIZATION
+  // ═══════════════════════════════════════════════════════════════
+
   async function init() {
     try {
+      // Load static content for cheatsheet/flashcards
       const res = await fetch('data/content.json');
       const json = await res.json();
       state.data = json.items || [];
+
+      // Generate cheatsheet/flashcard content from templates
+      if (typeof QuestionTemplates !== 'undefined') {
+        const generatedContent = generateStaticContent();
+        state.data = [...state.data.filter(i => !i.id.startsWith('q-') && !i.id.startsWith('p-')), ...generatedContent];
+      }
+
       render();
+      setupKeyboardHandlers();
     } catch(e) {
       console.error('Failed to load content:', e);
       main.innerHTML = '<div class="error-message">Failed to load content. Please refresh the page.</div>';
     }
   }
 
-  // Tab Navigation
+  /**
+   * Generate static content from question templates for cheatsheet/flashcards
+   */
+  function generateStaticContent() {
+    if (typeof QuestionTemplates === 'undefined') return [];
+
+    const content = [];
+    const seed = 12345; // Fixed seed for consistent static content
+
+    QuestionTemplates.QUESTION_TEMPLATES.forEach((template, idx) => {
+      const question = QuestionTemplates.generateQuestion(template, seed + idx);
+      content.push({
+        id: question.id,
+        section: question.section,
+        tags: question.tags,
+        fullQuestion: question.fullQuestion,
+        finalAnswer: String(question.finalAnswer),
+        cheatsheet: question.cheatsheet,
+        flashcard: question.flashcard
+      });
+    });
+
+    return content;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // TAB NAVIGATION
+  // ═══════════════════════════════════════════════════════════════
+
   tabs.forEach(btn => {
     btn.addEventListener('click', () => {
       tabs.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       state.view = btn.dataset.view;
-      // Reset states when switching tabs
+
+      // Reset view-specific state
       if (state.view === 'quiz') {
         state.quiz.active = false;
         state.quiz.started = false;
-        state.quiz.showHint = false;
       }
       if (state.view === 'flashcards') {
         state.flashcard.flipped = false;
@@ -71,9 +139,54 @@
     });
   });
 
-  // Main Render Function
+  // ═══════════════════════════════════════════════════════════════
+  // KEYBOARD HANDLERS
+  // ═══════════════════════════════════════════════════════════════
+
+  function setupKeyboardHandlers() {
+    document.addEventListener('keydown', (e) => {
+      // Flashcard controls
+      if (state.view === 'flashcards' && !state.flashcard.completed) {
+        if (e.key === 'ArrowLeft') {
+          navigateFlashcard(-1);
+        } else if (e.key === 'ArrowRight') {
+          navigateFlashcard(1);
+        } else if (e.key === ' ') {
+          e.preventDefault();
+          toggleFlashcard();
+        }
+      }
+
+      // Quiz controls
+      if (state.view === 'quiz' && state.quiz.active) {
+        if (e.key === 'Enter' && state.quiz.selectedAnswer !== null) {
+          checkAnswer();
+        } else if (e.key === 'Escape') {
+          if (confirm('Quit quiz?')) {
+            resetQuiz();
+          }
+        } else if (e.key >= '1' && e.key <= '5') {
+          const idx = parseInt(e.key) - 1;
+          const qItem = state.quiz.queue[state.quiz.qIndex];
+          if (qItem && qItem.quiz.steps[state.quiz.sIndex].choices[idx]) {
+            selectAnswer(idx);
+          }
+        }
+      }
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MAIN RENDER FUNCTION
+  // Clears DOM completely to prevent stacking
+  // ═══════════════════════════════════════════════════════════════
+
   function render() {
-    main.innerHTML = '';
+    // CRITICAL: Clear all children to prevent ghost elements
+    while (main.firstChild) {
+      main.removeChild(main.firstChild);
+    }
+
     switch(state.view) {
       case 'cheatsheet':
         renderCheatsheet();
@@ -88,13 +201,13 @@
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // CHEATSHEET VIEW - Enhanced with Full Question Display
+  // CHEATSHEET VIEW
   // ═══════════════════════════════════════════════════════════════
+
   function renderCheatsheet() {
     const container = document.createElement('div');
     container.className = 'cheatsheet-view';
 
-    // Group items by section
     const sections = {
       quant: { title: 'Quantitative Reasoning', items: [] },
       verbal: { title: 'Verbal Reasoning', items: [] },
@@ -107,7 +220,6 @@
       }
     });
 
-    // Render each section
     Object.entries(sections).forEach(([key, section]) => {
       if (section.items.length === 0) return;
 
@@ -122,7 +234,6 @@
         const card = document.createElement('div');
         card.className = 'item-card';
 
-        // Build step-by-step explanation
         let stepsHtml = '';
         if (item.cheatsheet.steps && item.cheatsheet.steps.length > 0) {
           stepsHtml = `
@@ -135,7 +246,6 @@
           `;
         }
 
-        // Build key formulas
         let keyFormulasHtml = '';
         if (item.cheatsheet.keyFormulas && item.cheatsheet.keyFormulas.length > 0) {
           keyFormulasHtml = `
@@ -172,8 +282,10 @@
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // FLASHCARDS VIEW - Quizlet Style with Reset
+  // FLASHCARDS VIEW
+  // CRITICAL: Only ONE card in DOM at a time
   // ═══════════════════════════════════════════════════════════════
+
   function renderFlashcards() {
     const deck = state.data.filter(i => i.flashcard);
     if (!deck.length) {
@@ -181,7 +293,7 @@
       return;
     }
 
-    // Check if completed all cards
+    // Handle completion state
     if (state.flashcard.completed) {
       renderFlashcardComplete(deck);
       return;
@@ -197,6 +309,7 @@
 
     const item = deck[state.flashcard.index];
 
+    // Create single container - DOM already cleared in render()
     const container = document.createElement('div');
     container.className = 'flashcard-view';
 
@@ -225,12 +338,12 @@
       </div>
 
       <div class="fc-controls">
-        <button class="fc-nav-btn" id="fc-prev" ${state.flashcard.index === 0 ? 'disabled' : ''} aria-label="Previous card">
+        <button class="fc-nav-btn" id="fc-prev" ${state.flashcard.index === 0 ? 'disabled' : ''}>
           <span class="fc-nav-icon">&larr;</span>
-          <span class="fc-nav-text">Previous</span>
+          <span>Previous</span>
         </button>
-        <button class="fc-nav-btn primary" id="fc-next" aria-label="Next card">
-          <span class="fc-nav-text">${state.flashcard.index === deck.length - 1 ? 'Finish' : 'Next'}</span>
+        <button class="fc-nav-btn primary" id="fc-next">
+          <span>${state.flashcard.index === deck.length - 1 ? 'Finish' : 'Next'}</span>
           <span class="fc-nav-icon">&rarr;</span>
         </button>
       </div>
@@ -239,69 +352,44 @@
         Use arrow keys to navigate, Space to flip
       </div>
 
-      <button class="fc-reset-btn" id="fc-reset">
-        Reset Deck
-      </button>
+      <button class="fc-reset-btn" id="fc-reset">Reset Deck</button>
     `;
 
     main.appendChild(container);
 
-    // Card flip handler
-    const fcCard = container.querySelector('#fc-card');
-    fcCard.addEventListener('click', () => {
-      state.flashcard.flipped = !state.flashcard.flipped;
-      fcCard.classList.toggle('flipped', state.flashcard.flipped);
-    });
-
-    // Navigation handlers
-    container.querySelector('#fc-prev').addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (state.flashcard.index > 0) {
-        state.flashcard.index--;
-        state.flashcard.flipped = false;
-        renderFlashcards();
-      }
-    });
-
-    container.querySelector('#fc-next').addEventListener('click', (e) => {
-      e.stopPropagation();
-      state.flashcard.index++;
-      state.flashcard.flipped = false;
-      renderFlashcards();
-    });
-
-    // Reset handler
-    container.querySelector('#fc-reset').addEventListener('click', () => {
-      state.flashcard.index = 0;
-      state.flashcard.flipped = false;
-      state.flashcard.completed = false;
-      renderFlashcards();
-    });
-
-    // Keyboard navigation
-    const handleKeydown = (e) => {
-      if (state.view !== 'flashcards') {
-        document.removeEventListener('keydown', handleKeydown);
-        return;
-      }
-      if (e.key === 'ArrowLeft' && state.flashcard.index > 0) {
-        state.flashcard.index--;
-        state.flashcard.flipped = false;
-        renderFlashcards();
-      } else if (e.key === 'ArrowRight') {
-        state.flashcard.index++;
-        state.flashcard.flipped = false;
-        renderFlashcards();
-      } else if (e.key === ' ') {
-        e.preventDefault();
-        state.flashcard.flipped = !state.flashcard.flipped;
-        fcCard.classList.toggle('flipped', state.flashcard.flipped);
-      }
-    };
-    document.addEventListener('keydown', handleKeydown);
+    // Event handlers
+    document.getElementById('fc-card').addEventListener('click', toggleFlashcard);
+    document.getElementById('fc-prev').addEventListener('click', () => navigateFlashcard(-1));
+    document.getElementById('fc-next').addEventListener('click', () => navigateFlashcard(1));
+    document.getElementById('fc-reset').addEventListener('click', resetFlashcards);
   }
 
-  // Flashcard Completion Screen
+  function toggleFlashcard() {
+    state.flashcard.flipped = !state.flashcard.flipped;
+    const card = document.getElementById('fc-card');
+    if (card) {
+      card.classList.toggle('flipped', state.flashcard.flipped);
+    }
+  }
+
+  function navigateFlashcard(direction) {
+    const deck = state.data.filter(i => i.flashcard);
+    const newIndex = state.flashcard.index + direction;
+
+    if (newIndex >= 0 && newIndex <= deck.length) {
+      state.flashcard.index = newIndex;
+      state.flashcard.flipped = false;
+      render(); // Full re-render ensures single card
+    }
+  }
+
+  function resetFlashcards() {
+    state.flashcard.index = 0;
+    state.flashcard.flipped = false;
+    state.flashcard.completed = false;
+    render();
+  }
+
   function renderFlashcardComplete(deck) {
     const container = document.createElement('div');
     container.className = 'flashcard-complete-screen';
@@ -311,45 +399,32 @@
         <div class="complete-icon">&#x2714;</div>
         <h2 class="complete-title">Deck Complete!</h2>
         <p class="complete-subtitle">You've reviewed all ${deck.length} flashcards.</p>
-
         <div class="complete-actions">
-          <button class="complete-btn primary" id="fc-restart">
-            Review Again
-          </button>
-          <button class="complete-btn secondary" id="fc-shuffle">
-            Shuffle & Review
-          </button>
+          <button class="complete-btn primary" id="fc-review">Review Again</button>
+          <button class="complete-btn secondary" id="fc-shuffle">Shuffle & Review</button>
         </div>
       </div>
     `;
 
     main.appendChild(container);
 
-    container.querySelector('#fc-restart').addEventListener('click', () => {
-      state.flashcard.index = 0;
-      state.flashcard.flipped = false;
-      state.flashcard.completed = false;
-      renderFlashcards();
-    });
-
-    container.querySelector('#fc-shuffle').addEventListener('click', () => {
-      // Shuffle the flashcard order by shuffling data
+    document.getElementById('fc-review').addEventListener('click', resetFlashcards);
+    document.getElementById('fc-shuffle').addEventListener('click', () => {
+      // Shuffle data for flashcards
       for (let i = state.data.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [state.data[i], state.data[j]] = [state.data[j], state.data[i]];
       }
-      state.flashcard.index = 0;
-      state.flashcard.flipped = false;
-      state.flashcard.completed = false;
-      renderFlashcards();
+      resetFlashcards();
     });
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // QUIZ VIEW - Multiple Choice with Hints
+  // QUIZ VIEW
   // ═══════════════════════════════════════════════════════════════
+
   function renderQuiz() {
-    // Phase 1: Initial START screen
+    // Phase 1: START screen
     if (!state.quiz.started) {
       renderQuizStart();
       return;
@@ -361,17 +436,16 @@
       return;
     }
 
-    // Phase 3: Active quiz question
-    const qItem = state.quiz.queue[state.quiz.qIndex];
-    if (!qItem) {
+    // Phase 3: Check if quiz complete
+    if (state.quiz.qIndex >= state.quiz.queue.length) {
       renderQuizComplete();
       return;
     }
 
-    renderQuizQuestion(qItem);
+    // Phase 4: Active question
+    renderQuizQuestion();
   }
 
-  // Quiz Phase 1: START Screen
   function renderQuizStart() {
     const container = document.createElement('div');
     container.className = 'quiz-start-screen';
@@ -379,7 +453,7 @@
     container.innerHTML = `
       <div class="quiz-hero">
         <div class="quiz-logo-container">
-          <svg class="quiz-logo-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg class="quiz-logo-svg" viewBox="0 0 120 120" fill="none">
             <rect x="10" y="10" width="100" height="100" rx="16" fill="url(#grad1)" />
             <path d="M35 55L50 70L85 35" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
             <path d="M30 85H90" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
@@ -393,54 +467,54 @@
           </svg>
         </div>
         <h1 class="quiz-title">GMAT Quiz</h1>
-        <p class="quiz-subtitle">Step-by-step problem solving</p>
+        <p class="quiz-subtitle">Parameterized questions with randomized numbers</p>
       </div>
 
       <button class="quiz-start-btn" id="quiz-start">
-        <span class="start-btn-text">Start Quiz</span>
+        <span>Start Quiz</span>
         <span class="start-btn-icon">&rarr;</span>
       </button>
 
       <div class="quiz-rules">
         <div class="rule-item">
           <span class="rule-icon">1</span>
-          <span class="rule-text">Answer each step to unlock the next</span>
+          <span class="rule-text">Answer each step to progress</span>
         </div>
         <div class="rule-item">
           <span class="rule-icon">2</span>
-          <span class="rule-text">Get a hint after your first wrong answer</span>
+          <span class="rule-text">First wrong: marked incorrect, retry</span>
         </div>
         <div class="rule-item">
           <span class="rule-icon">3</span>
-          <span class="rule-text">Two wrong on one step = restart quiz</span>
+          <span class="rule-text">Second wrong: quiz restarts</span>
         </div>
       </div>
     `;
 
     main.appendChild(container);
-
-    container.querySelector('#quiz-start').addEventListener('click', () => {
+    document.getElementById('quiz-start').addEventListener('click', () => {
       state.quiz.started = true;
       render();
     });
   }
 
-  // Quiz Phase 2: Section Selector
   function renderQuizSectionSelector() {
+    // Count questions per section using templates
+    const counts = { all: 0, quant: 0, verbal: 0, 'data-insights': 0 };
+
+    if (typeof QuestionTemplates !== 'undefined') {
+      QuestionTemplates.QUESTION_TEMPLATES.forEach(t => {
+        counts.all++;
+        if (counts[t.section] !== undefined) counts[t.section]++;
+      });
+    }
+
     const container = document.createElement('div');
     container.className = 'quiz-section-selector';
 
-    // Count questions per section (check for quiz.steps)
-    const counts = {
-      all: state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0).length,
-      quant: state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0 && i.section === 'quant').length,
-      verbal: state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0 && i.section === 'verbal').length,
-      'data-insights': state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0 && i.section === 'data-insights').length
-    };
-
     container.innerHTML = `
       <h2 class="section-selector-title">Choose a Section</h2>
-      <p class="section-selector-subtitle">Select the question category you want to practice</p>
+      <p class="section-selector-subtitle">Questions have randomized numbers each attempt</p>
 
       <div class="section-tabs">
         <button class="section-tab ${state.quiz.filter === 'all' ? 'active' : ''}" data-section="all">
@@ -451,28 +525,14 @@
           <span class="section-tab-name">Quantitative</span>
           <span class="section-tab-count">${counts.quant} questions</span>
         </button>
-        <button class="section-tab ${state.quiz.filter === 'verbal' ? 'active' : ''}" data-section="verbal">
-          <span class="section-tab-name">Verbal</span>
-          <span class="section-tab-count">${counts.verbal} questions</span>
-        </button>
-        <button class="section-tab ${state.quiz.filter === 'data-insights' ? 'active' : ''}" data-section="data-insights">
-          <span class="section-tab-name">Data Insights</span>
-          <span class="section-tab-count">${counts['data-insights']} questions</span>
-        </button>
       </div>
 
-      <button class="quiz-begin-btn" id="quiz-begin">
-        Begin Quiz
-      </button>
-
-      <button class="quiz-back-btn" id="quiz-back">
-        &larr; Back
-      </button>
+      <button class="quiz-begin-btn" id="quiz-begin">Begin Quiz</button>
+      <button class="quiz-back-btn" id="quiz-back">&larr; Back</button>
     `;
 
     main.appendChild(container);
 
-    // Section tab handlers
     container.querySelectorAll('.section-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         container.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
@@ -481,30 +541,43 @@
       });
     });
 
-    // Begin quiz handler
-    container.querySelector('#quiz-begin').addEventListener('click', startQuiz);
-
-    // Back button handler
-    container.querySelector('#quiz-back').addEventListener('click', () => {
+    document.getElementById('quiz-begin').addEventListener('click', startQuiz);
+    document.getElementById('quiz-back').addEventListener('click', () => {
       state.quiz.started = false;
       render();
     });
   }
 
-  // Quiz Phase 3: Active Question (Multiple Choice with Hints)
-  function renderQuizQuestion(qItem) {
+  // ═══════════════════════════════════════════════════════════════
+  // QUIZ QUESTION RENDERING
+  // Single question visible at a time
+  // ═══════════════════════════════════════════════════════════════
+
+  function renderQuizQuestion() {
+    const qItem = state.quiz.queue[state.quiz.qIndex];
+    if (!qItem || !qItem.quiz || !qItem.quiz.steps) {
+      renderQuizComplete();
+      return;
+    }
+
     const step = qItem.quiz.steps[state.quiz.sIndex];
+    if (!step) {
+      // Move to next question
+      state.quiz.qIndex++;
+      state.quiz.sIndex = 0;
+      state.quiz.attempts = 0;
+      render();
+      return;
+    }
+
     const totalSteps = qItem.quiz.steps.length;
     const totalQuestions = state.quiz.queue.length;
-    const isLastStep = state.quiz.sIndex === totalSteps - 1;
-
-    // Progress calculation
     const progressPct = ((state.quiz.qIndex + (state.quiz.sIndex / totalSteps)) / totalQuestions) * 100;
 
     const container = document.createElement('div');
     container.className = 'quiz-question-view';
 
-    // Generate choice buttons
+    // Build choices HTML
     const choicesHtml = step.choices.map((choice, idx) => `
       <button class="quiz-choice-btn ${state.quiz.selectedAnswer === idx ? 'selected' : ''}" data-index="${idx}">
         <span class="choice-letter">${String.fromCharCode(65 + idx)}</span>
@@ -512,22 +585,14 @@
       </button>
     `).join('');
 
-    // Show hint if available and first wrong
-    const hintHtml = (state.quiz.showHint && step.hint) ? `
-      <div class="quiz-hint">
-        <span class="hint-icon">&#x1F4A1;</span>
-        <span class="hint-text">${step.hint}</span>
-      </div>
-    ` : '';
-
     container.innerHTML = `
       <div class="quiz-header">
         <div class="quiz-progress-bar">
           <div class="quiz-progress-fill" style="width: ${progressPct}%"></div>
         </div>
         <div class="quiz-meta">
-          <span class="quiz-question-num">Question ${state.quiz.qIndex + 1} of ${totalQuestions}</span>
-          <span class="quiz-step-num">${isLastStep ? 'Final Step' : `Step ${state.quiz.sIndex + 1} of ${totalSteps}`}</span>
+          <span>Question ${state.quiz.qIndex + 1} of ${totalQuestions}</span>
+          <span>Step ${state.quiz.sIndex + 1} of ${totalSteps}</span>
         </div>
       </div>
 
@@ -546,10 +611,8 @@
           ${choicesHtml}
         </div>
 
-        ${hintHtml}
-
         <div class="quiz-strike-indicator">
-          ${state.quiz.stepStrikes > 0 ? `<span class="strike-warning">Attempt ${state.quiz.stepStrikes + 1} of 2</span>` : ''}
+          ${state.quiz.attempts > 0 ? `<span class="strike-warning">Attempt ${state.quiz.attempts + 1} of 2 — Next wrong restarts quiz</span>` : ''}
         </div>
 
         <div class="quiz-feedback" id="quiz-feedback"></div>
@@ -559,158 +622,174 @@
         </button>
       </div>
 
-      <button class="quiz-quit-btn" id="quiz-quit">
-        Quit Quiz
-      </button>
+      <button class="quiz-quit-btn" id="quiz-quit">Quit Quiz</button>
     `;
 
     main.appendChild(container);
 
-    const choicesContainer = container.querySelector('#quiz-choices');
-    const submitBtn = container.querySelector('#quiz-submit');
-    const feedback = container.querySelector('#quiz-feedback');
-
-    // Choice selection handlers
-    choicesContainer.querySelectorAll('.quiz-choice-btn').forEach(btn => {
+    // Event handlers
+    container.querySelectorAll('.quiz-choice-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        // Remove selected from all
-        choicesContainer.querySelectorAll('.quiz-choice-btn').forEach(b => b.classList.remove('selected'));
-        // Add selected to clicked
-        btn.classList.add('selected');
-        state.quiz.selectedAnswer = parseInt(btn.dataset.index);
-        submitBtn.disabled = false;
+        selectAnswer(parseInt(btn.dataset.index));
       });
     });
 
-    // Submit handler
-    const checkAnswer = () => {
-      if (state.quiz.selectedAnswer === null) {
-        feedback.className = 'quiz-feedback error';
-        feedback.textContent = 'Please select an answer.';
-        feedback.style.display = 'block';
-        return;
-      }
-
-      const isCorrect = state.quiz.selectedAnswer === step.answerIndex;
-
-      // Disable all choice buttons
-      choicesContainer.querySelectorAll('.quiz-choice-btn').forEach(btn => {
-        btn.disabled = true;
-        const idx = parseInt(btn.dataset.index);
-        if (idx === step.answerIndex) {
-          btn.classList.add('correct');
-        } else if (idx === state.quiz.selectedAnswer && !isCorrect) {
-          btn.classList.add('wrong');
-        }
-      });
-
-      if (isCorrect) {
-        // Correct answer
-        feedback.className = 'quiz-feedback success';
-        feedback.textContent = 'Correct!';
-        feedback.style.display = 'block';
-        state.quiz.stepStrikes = 0;
-        state.quiz.showHint = false;
-
-        submitBtn.disabled = true;
-
-        setTimeout(() => {
-          state.quiz.selectedAnswer = null;
-          if (state.quiz.sIndex < totalSteps - 1) {
-            // Next step
-            state.quiz.sIndex++;
-          } else {
-            // Next question
-            state.quiz.qIndex++;
-            state.quiz.sIndex = 0;
-          }
-          render();
-        }, 1000);
-      } else {
-        // Wrong answer
-        state.quiz.stepStrikes++;
-
-        if (state.quiz.stepStrikes >= 2) {
-          // 2 strikes on same step = restart
-          feedback.className = 'quiz-feedback error restart';
-          feedback.innerHTML = `
-            <span class="feedback-icon">&#x2717;</span>
-            <span class="feedback-text">Two incorrect attempts. Restarting quiz...</span>
-            <span class="feedback-answer">The correct answer was: <strong>${step.choices[step.answerIndex]}</strong></span>
-          `;
-          feedback.style.display = 'block';
-
-          submitBtn.disabled = true;
-
-          setTimeout(() => {
-            state.quiz.active = false;
-            state.quiz.started = true;
-            state.quiz.stepStrikes = 0;
-            state.quiz.selectedAnswer = null;
-            state.quiz.showHint = false;
-            render();
-          }, 3000);
-        } else {
-          // First strike - show hint and allow retry
-          state.quiz.showHint = true;
-          feedback.className = 'quiz-feedback error';
-          feedback.textContent = 'Not quite. Try again!';
-          feedback.style.display = 'block';
-
-          // Re-enable choices for retry
-          setTimeout(() => {
-            state.quiz.selectedAnswer = null;
-            render(); // Re-render to show hint
-          }, 1200);
-        }
-      }
-    };
-
-    submitBtn.addEventListener('click', checkAnswer);
-
-    // Quit handler
-    container.querySelector('#quiz-quit').addEventListener('click', () => {
-      if (confirm('Are you sure you want to quit the quiz?')) {
-        state.quiz.active = false;
-        state.quiz.started = false;
-        state.quiz.stepStrikes = 0;
-        state.quiz.selectedAnswer = null;
-        state.quiz.showHint = false;
-        render();
+    document.getElementById('quiz-submit').addEventListener('click', checkAnswer);
+    document.getElementById('quiz-quit').addEventListener('click', () => {
+      if (confirm('Quit quiz? Your progress will be lost.')) {
+        resetQuiz();
       }
     });
   }
 
-  // Quiz Completion Screen
+  function selectAnswer(idx) {
+    state.quiz.selectedAnswer = idx;
+
+    // Update UI
+    document.querySelectorAll('.quiz-choice-btn').forEach(btn => {
+      btn.classList.remove('selected');
+      if (parseInt(btn.dataset.index) === idx) {
+        btn.classList.add('selected');
+      }
+    });
+
+    const submitBtn = document.getElementById('quiz-submit');
+    if (submitBtn) submitBtn.disabled = false;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // ANSWER CHECKING - STRICT ATTEMPT LOGIC
+  // 1st wrong: mark incorrect, NO hint, allow retry
+  // 2nd wrong: IMMEDIATE restart
+  // ═══════════════════════════════════════════════════════════════
+
+  function checkAnswer() {
+    const qItem = state.quiz.queue[state.quiz.qIndex];
+    const step = qItem.quiz.steps[state.quiz.sIndex];
+    const isCorrect = state.quiz.selectedAnswer === step.answerIndex;
+
+    const feedback = document.getElementById('quiz-feedback');
+    const choicesContainer = document.getElementById('quiz-choices');
+
+    // Disable all choices
+    choicesContainer.querySelectorAll('.quiz-choice-btn').forEach(btn => {
+      btn.disabled = true;
+      const idx = parseInt(btn.dataset.index);
+      if (idx === step.answerIndex) {
+        btn.classList.add('correct');
+      } else if (idx === state.quiz.selectedAnswer && !isCorrect) {
+        btn.classList.add('wrong');
+      }
+    });
+
+    if (isCorrect) {
+      // CORRECT ANSWER
+      feedback.className = 'quiz-feedback success';
+      feedback.textContent = 'Correct!';
+      feedback.style.display = 'block';
+
+      document.getElementById('quiz-submit').disabled = true;
+
+      setTimeout(() => {
+        // Move to next step or question
+        state.quiz.sIndex++;
+        state.quiz.selectedAnswer = null;
+        state.quiz.attempts = 0; // Reset attempts for new question/step
+
+        if (state.quiz.sIndex >= qItem.quiz.steps.length) {
+          // Completed all steps for this question
+          state.quiz.score++;
+          state.quiz.qIndex++;
+          state.quiz.sIndex = 0;
+        }
+
+        render();
+      }, 800);
+    } else {
+      // WRONG ANSWER
+      state.quiz.attempts++;
+
+      if (state.quiz.attempts >= 2) {
+        // 2ND WRONG - RESTART QUIZ
+        feedback.className = 'quiz-feedback error restart';
+        feedback.innerHTML = `
+          <span class="feedback-icon">&#x2717;</span>
+          <span>Two incorrect attempts — restarting quiz.</span>
+          <span class="feedback-answer">Correct answer: <strong>${step.choices[step.answerIndex]}</strong></span>
+        `;
+        feedback.style.display = 'block';
+
+        document.getElementById('quiz-submit').disabled = true;
+
+        setTimeout(() => {
+          // Full restart with new parameters
+          state.quiz.attemptNumber++;
+          state.quiz.active = false;
+          state.quiz.started = true;
+          state.quiz.qIndex = 0;
+          state.quiz.sIndex = 0;
+          state.quiz.score = 0;
+          state.quiz.attempts = 0;
+          state.quiz.selectedAnswer = null;
+          render();
+        }, 2500);
+      } else {
+        // 1ST WRONG - NO HINT, allow retry
+        feedback.className = 'quiz-feedback error';
+        feedback.innerHTML = `
+          <span class="feedback-icon">&#x2717;</span>
+          <span>Incorrect. Try again.</span>
+        `;
+        feedback.style.display = 'block';
+
+        // Re-enable choices for retry
+        setTimeout(() => {
+          state.quiz.selectedAnswer = null;
+          render();
+        }, 1000);
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // QUIZ COMPLETION SCREEN
+  // ═══════════════════════════════════════════════════════════════
+
   function renderQuizComplete() {
+    const totalQuestions = state.quiz.queue.length;
+    const score = state.quiz.score;
+    const percent = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
+
     const container = document.createElement('div');
     container.className = 'quiz-complete-screen';
 
-    const totalSteps = state.quiz.queue.reduce((sum, q) => sum + (q.quiz.steps ? q.quiz.steps.length : 0), 0);
-
     container.innerHTML = `
       <div class="complete-content">
-        <div class="complete-icon">&#x1F389;</div>
-        <h2 class="complete-title">Congratulations!</h2>
-        <p class="complete-subtitle">You completed all questions in this set.</p>
+        <div class="complete-icon">${percent >= 80 ? '🎉' : percent >= 50 ? '👍' : '📚'}</div>
+        <h2 class="complete-title">${percent >= 80 ? 'Excellent!' : percent >= 50 ? 'Good Job!' : 'Keep Practicing!'}</h2>
+        <p class="complete-subtitle">Quiz Complete</p>
 
         <div class="complete-stats">
           <div class="stat-item">
-            <span class="stat-value">${state.quiz.queue.length}</span>
-            <span class="stat-label">Questions</span>
+            <span class="stat-value">${score}</span>
+            <span class="stat-label">Correct</span>
           </div>
           <div class="stat-item">
-            <span class="stat-value">${totalSteps}</span>
-            <span class="stat-label">Steps Completed</span>
+            <span class="stat-value">${totalQuestions}</span>
+            <span class="stat-label">Total</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">${percent}%</span>
+            <span class="stat-label">Score</span>
           </div>
         </div>
 
         <div class="complete-actions">
-          <button class="complete-btn primary" id="restart-quiz">
-            Try Again
+          <button class="complete-btn primary" id="quiz-restart">
+            Try Again (New Numbers)
           </button>
-          <button class="complete-btn secondary" id="back-to-start">
-            Choose Different Section
+          <button class="complete-btn secondary" id="quiz-change-section">
+            Change Section
           </button>
         </div>
       </div>
@@ -718,55 +797,77 @@
 
     main.appendChild(container);
 
-    container.querySelector('#restart-quiz').addEventListener('click', () => {
+    document.getElementById('quiz-restart').addEventListener('click', () => {
+      state.quiz.attemptNumber++;
       startQuiz();
     });
 
-    container.querySelector('#back-to-start').addEventListener('click', () => {
+    document.getElementById('quiz-change-section').addEventListener('click', () => {
       state.quiz.active = false;
       state.quiz.started = true;
       render();
     });
   }
 
-  // Start Quiz Function
-  function startQuiz() {
-    let pool = state.data.filter(i => i.quiz && i.quiz.steps && i.quiz.steps.length > 0);
+  // ═══════════════════════════════════════════════════════════════
+  // QUIZ LIFECYCLE
+  // ═══════════════════════════════════════════════════════════════
 
-    if (state.quiz.filter !== 'all') {
-      pool = pool.filter(i => i.section === state.quiz.filter);
+  function startQuiz() {
+    if (typeof QuestionTemplates === 'undefined') {
+      alert('Question templates not loaded. Please refresh.');
+      return;
     }
 
-    if (pool.length === 0) {
+    // Generate new questions with current attempt seed
+    const questions = QuestionTemplates.generateQuizQuestions(
+      state.quiz.baseSeed,
+      state.quiz.attemptNumber,
+      state.quiz.filter
+    );
+
+    if (questions.length === 0) {
       alert('No questions available for this section.');
       return;
     }
 
-    // Fisher-Yates shuffle
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
-    }
-
-    state.quiz.queue = pool;
+    state.quiz.queue = questions;
     state.quiz.qIndex = 0;
     state.quiz.sIndex = 0;
-    state.quiz.stepStrikes = 0;
+    state.quiz.score = 0;
+    state.quiz.attempts = 0;
     state.quiz.selectedAnswer = null;
-    state.quiz.showHint = false;
     state.quiz.active = true;
     render();
   }
 
-  // Theme Toggle
+  function resetQuiz() {
+    state.quiz.active = false;
+    state.quiz.started = false;
+    state.quiz.qIndex = 0;
+    state.quiz.sIndex = 0;
+    state.quiz.score = 0;
+    state.quiz.attempts = 0;
+    state.quiz.selectedAnswer = null;
+    render();
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // THEME TOGGLE
+  // ═══════════════════════════════════════════════════════════════
+
   const themeToggle = document.getElementById('themeToggle');
   if (themeToggle) {
     themeToggle.addEventListener('click', () => {
       document.body.classList.toggle('light-theme');
-      themeToggle.textContent = document.body.classList.contains('light-theme') ? '\u263E' : '\u2600\uFE0E';
+      themeToggle.textContent = document.body.classList.contains('light-theme') ? '☾' : '☀︎';
     });
   }
 
-  // Initialize
+  // ═══════════════════════════════════════════════════════════════
+  // INITIALIZATION
+  // ═══════════════════════════════════════════════════════════════
+
   init();
+
 })();

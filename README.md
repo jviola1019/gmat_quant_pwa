@@ -9,13 +9,14 @@ A modern, interactive Progressive Web Application for GMAT quantitative reasonin
 ## Features
 
 ### Multi-Step Multiple Choice Quiz System
-- **18 verified GMAT-style questions**: Covering exponents, factorials, number theory, algebra, word problems, and more
+- **22 GMAT-style questions**: Including 18 fixed + 4 parameterized questions with randomized numbers
+- **Parameterized questions**: Questions regenerate with different numbers on each attempt
 - **Step-by-step problem solving**: Questions are broken into 3-6 logical steps that guide you through the reasoning process
 - **Multiple choice format**: Select from 4-5 answer choices per step
 - **Hints after first mistake**: Get a step wrong once, and a helpful hint appears to guide you to the correct answer
-- **Strike system**: Get a step wrong twice, and the quiz restarts with randomized questions to ensure mastery
+- **Strike system**: Get a step wrong twice, and the quiz restarts with new number variants
 - **Section filtering**: Practice all questions or focus on specific categories (Quantitative, Verbal, Data Insights)
-- **Fisher-Yates shuffle**: Questions appear in random order each time
+- **Fisher-Yates shuffle**: Questions appear in random order each time with seeded randomization
 
 ### Quizlet-Style Flashcards
 - **3D flip animation**: Click or tap to reveal the answer
@@ -73,8 +74,9 @@ A modern, interactive Progressive Web Application for GMAT quantitative reasonin
 
 ---
 
-## Question Topics (18 Total)
+## Question Topics (22 Total)
 
+### Fixed Questions (18)
 | ID | Topic | Section | Steps |
 |----|-------|---------|-------|
 | q-exponents-abc | Exponent Substitution with Variables | Quant | 4 |
@@ -96,6 +98,14 @@ A modern, interactive Progressive Web Application for GMAT quantitative reasonin
 | q-parabola-minimum | Finding Minimum of Quadratic Functions | Quant | 4 |
 | q-continued-fraction | Evaluating Continued Fractions | Quant | 5 |
 
+### Parameterized Questions (4) - Numbers Randomize Each Attempt
+| ID | Topic | Section | Steps |
+|----|-------|---------|-------|
+| p-simple-percentage | Percentage Calculations | Quant | 3 |
+| p-distance-rate-time | Distance, Rate, and Time | Quant | 3 |
+| p-simple-interest | Simple Interest | Quant | 4 |
+| p-ratio-problem | Ratio Problems | Quant | 4 |
+
 ---
 
 ## Project Structure
@@ -103,14 +113,15 @@ A modern, interactive Progressive Web Application for GMAT quantitative reasonin
 ```
 gmat_quant_pwa/
 ├── index.html          # Main HTML entry point
-├── app.js              # Core application logic (v7.0 - Hints & Enhanced Cheatsheet)
+├── app.js              # Core application logic (v8.0 - Parameterized Questions)
+├── parameterized.js    # Seeded RNG and variant generation system
 ├── styles.css          # Complete styling (Material Design 3, square corners)
 ├── bg.js               # Three.js Beams background animation
 ├── sw.js               # Service Worker for offline caching
 ├── manifest.json       # PWA manifest for installability
 ├── offline.html        # Offline fallback page
 ├── data/
-│   └── content.json    # All quiz questions with hints, flashcards, and step-by-step solutions
+│   └── content.json    # All quiz questions including parameterized templates
 └── icons/
     ├── icon-192.png    # PWA icon (192x192)
     ├── icon-512.png    # PWA icon (512x512)
