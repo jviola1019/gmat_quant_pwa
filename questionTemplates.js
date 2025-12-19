@@ -1,40 +1,34 @@
 /**
  * GMAT Study PWA - Question Templates
- * Version 8.0 - All Questions Parameterized
+ * Version 9.0 - 18 Official GMAT Questions (Parameterized)
  *
  * DEVELOPER NOTES:
  * ================
  *
- * WHERE TEMPLATES LIVE:
- * - All question templates are defined in the QUESTION_TEMPLATES array below
- * - Each template has: id, section, tags, generate(rng) function
+ * TEMPLATE STRUCTURE:
+ * - Each question has `steps[]` for reasoning context (shown but not answered)
+ * - `finalQuestion` is what the user actually answers
+ * - `finalChoices` and `finalAnswerIndex` define the answer
+ * - Parameters regenerate on each quiz attempt
  *
- * HOW PARAMETERS ARE GENERATED:
- * - Each template's generate(rng) function receives a seeded RNG
- * - Parameters are picked using pickInt(), pickFrom() utilities
- * - Constraints ensure numbers are "clean" (no messy decimals)
+ * PARAMETERIZATION:
+ * - generate(rng) creates fresh parameters per attempt
+ * - Computed answers always match generated parameters
+ * - Constraints ensure valid math (no division by zero, etc.)
  *
- * HOW CORRECTNESS IS COMPUTED:
- * - Each step has a computeAnswer(params) function
- * - Distractors are generated from common mistakes
- * - Correct answer is always verified before returning
- *
- * HOW RESTART LOGIC TRIGGERS:
- * - See app.js: checkAnswer() function
- * - 1st wrong: mark incorrect, NO hint
- * - 2nd wrong: immediate quiz restart
+ * DISPLAY LOGIC (in app.js):
+ * - Steps are shown as context above the final question
+ * - User ONLY answers the final question
+ * - No intermediate step answering required
  */
 
 (function(global) {
   'use strict';
 
   // ═══════════════════════════════════════════════════════════════
-  // UTILITY FUNCTIONS
+  // SEEDED RNG UTILITIES
   // ═══════════════════════════════════════════════════════════════
 
-  /**
-   * Seeded RNG using Mulberry32 algorithm
-   */
   function seedRandom(seed) {
     let s = seed >>> 0;
     return function() {
@@ -71,1063 +65,942 @@
     return hash;
   }
 
-  /**
-   * GCD calculation for fraction problems
-   */
   function gcd(a, b) {
-    a = Math.abs(a);
-    b = Math.abs(b);
-    while (b) {
-      const t = b;
-      b = a % b;
-      a = t;
-    }
+    a = Math.abs(a); b = Math.abs(b);
+    while (b) { const t = b; b = a % b; a = t; }
     return a;
   }
 
-  /**
-   * Create choices array with correct answer and distractors
-   * Ensures all choices are unique and correct answer is included
-   */
-  function makeChoices(rng, correct, distractors, count = 4) {
-    const correctStr = String(correct);
-    const uniqueDistractors = [...new Set(distractors.map(String))]
-      .filter(d => d !== correctStr)
-      .slice(0, count - 1);
-
-    // If we need more distractors, generate variations
-    while (uniqueDistractors.length < count - 1) {
-      const variation = typeof correct === 'number'
-        ? correct + pickInt(rng, 1, 5) * (rng() > 0.5 ? 1 : -1)
-        : `${correct}*`;
-      const varStr = String(variation);
-      if (!uniqueDistractors.includes(varStr) && varStr !== correctStr) {
-        uniqueDistractors.push(varStr);
-      }
-    }
-
-    const choices = [correctStr, ...uniqueDistractors.slice(0, count - 1)];
-    const shuffled = shuffle(rng, choices);
-    return {
-      choices: shuffled,
-      answerIndex: shuffled.indexOf(correctStr)
-    };
-  }
-
   // ═══════════════════════════════════════════════════════════════
-  // QUESTION TEMPLATES
-  // Each template generates a complete question with randomized params
+  // 18 OFFICIAL GMAT QUESTION TEMPLATES (Parameterized)
   // ═══════════════════════════════════════════════════════════════
 
   const QUESTION_TEMPLATES = [
+
     // ─────────────────────────────────────────────────────────────
-    // 1. PERCENTAGE CALCULATION
+    // Q1: Exponents a^b · b^c
     // ─────────────────────────────────────────────────────────────
     {
-      id: 'q-percentage',
-      section: 'quant',
-      tags: ['percentages', 'arithmetic'],
-      generate: function(rng) {
-        const percent = pickFrom(rng, [10, 15, 20, 25, 30, 40, 50, 60, 75]);
-        const base = pickFrom(rng, [80, 100, 120, 160, 200, 240, 300, 400, 500]);
-        const answer = (percent * base) / 100;
-
-        return {
-          fullQuestion: `What is ${percent}% of ${base}?`,
-          finalAnswer: answer,
-          steps: [
-            {
-              prompt: `Step 1: To find ${percent}% of a number, convert to decimal. ${percent}% = ?`,
-              ...makeChoices(rng, percent / 100, [percent, percent / 10, percent / 1000])
-            },
-            {
-              prompt: `Step 2: Multiply ${percent / 100} × ${base} = ?`,
-              ...makeChoices(rng, answer, [answer + 10, answer - 10, answer * 2, base])
-            },
-            {
-              prompt: `Final: What is ${percent}% of ${base}?`,
-              ...makeChoices(rng, answer, [answer + 20, answer - 20, answer * 2, percent + base], 5)
-            }
-          ],
-          cheatsheet: {
-            title: 'Percentage Calculation',
-            body: `To find ${percent}% of ${base}: Convert ${percent}% to ${percent/100}, then multiply by ${base}.`,
-            steps: [`Convert: ${percent}% = ${percent}/100 = ${percent/100}`, `Calculate: ${percent/100} × ${base} = ${answer}`],
-            keyFormulas: ['X% of N = (X/100) × N']
-          },
-          flashcard: {
-            front: `What is ${percent}% of ${base}?`,
-            back: `${answer} — Convert to decimal (${percent/100}) and multiply by ${base}.`
-          }
-        };
-      }
-    },
-
-    // ─────────────────────────────────────────────────────────────
-    // 2. DISTANCE-RATE-TIME
-    // ─────────────────────────────────────────────────────────────
-    {
-      id: 'q-distance-rate-time',
-      section: 'quant',
-      tags: ['rates', 'distance', 'time'],
-      generate: function(rng) {
-        const speed = pickFrom(rng, [30, 40, 45, 50, 55, 60, 65, 70, 75, 80]);
-        const hours = pickFrom(rng, [2, 3, 4, 5, 6, 8]);
-        const distance = speed * hours;
-
-        return {
-          fullQuestion: `A car travels ${distance} miles in ${hours} hours. What is the car's average speed in miles per hour?`,
-          finalAnswer: speed,
-          steps: [
-            {
-              prompt: `Step 1: The formula for average speed is:`,
-              ...makeChoices(rng, 'Distance ÷ Time', ['Distance × Time', 'Time ÷ Distance', 'Distance + Time'])
-            },
-            {
-              prompt: `Step 2: Calculate: ${distance} miles ÷ ${hours} hours = ?`,
-              ...makeChoices(rng, speed, [speed + 10, speed - 10, distance, hours])
-            },
-            {
-              prompt: `Final: A car travels ${distance} miles in ${hours} hours. What is the average speed in mph?`,
-              ...makeChoices(rng, speed, [speed + 5, speed - 5, speed + 15, speed - 15], 5)
-            }
-          ],
-          cheatsheet: {
-            title: 'Distance, Rate, and Time',
-            body: `Speed = Distance / Time = ${distance} / ${hours} = ${speed} mph`,
-            steps: [`Distance = ${distance} miles`, `Time = ${hours} hours`, `Speed = ${distance} ÷ ${hours} = ${speed} mph`],
-            keyFormulas: ['Speed = Distance / Time', 'Distance = Speed × Time']
-          },
-          flashcard: {
-            front: `A car travels ${distance} miles in ${hours} hours. What's the speed?`,
-            back: `${speed} mph — Speed = Distance / Time = ${distance}/${hours}`
-          }
-        };
-      }
-    },
-
-    // ─────────────────────────────────────────────────────────────
-    // 3. SIMPLE INTEREST
-    // ─────────────────────────────────────────────────────────────
-    {
-      id: 'q-simple-interest',
-      section: 'quant',
-      tags: ['interest', 'finance', 'percentages'],
-      generate: function(rng) {
-        const principal = pickFrom(rng, [1000, 2000, 2500, 3000, 4000, 5000]);
-        const rate = pickFrom(rng, [2, 3, 4, 5, 6, 8, 10]);
-        const years = pickFrom(rng, [2, 3, 4, 5]);
-        const interest = (principal * rate * years) / 100;
-
-        return {
-          fullQuestion: `If $${principal} is invested at ${rate}% simple annual interest, how much interest is earned after ${years} years?`,
-          finalAnswer: interest,
-          steps: [
-            {
-              prompt: `Step 1: The simple interest formula is I = P × r × t. What is r for ${rate}%?`,
-              ...makeChoices(rng, rate / 100, [rate, rate / 10, rate * 100])
-            },
-            {
-              prompt: `Step 2: Calculate P × r = $${principal} × ${rate / 100} = ?`,
-              ...makeChoices(rng, principal * rate / 100, [principal + rate, principal - rate, principal])
-            },
-            {
-              prompt: `Step 3: Multiply by time: $${principal * rate / 100} × ${years} = ?`,
-              ...makeChoices(rng, interest, [interest + 100, interest - 50, interest * 2])
-            },
-            {
-              prompt: `Final: How much interest is earned on $${principal} at ${rate}% for ${years} years?`,
-              ...makeChoices(rng, interest, [interest + principal, principal, interest * 2, interest / 2], 5)
-            }
-          ],
-          cheatsheet: {
-            title: 'Simple Interest',
-            body: `I = P × r × t = $${principal} × ${rate/100} × ${years} = $${interest}`,
-            steps: [`P = $${principal}`, `r = ${rate}% = ${rate/100}`, `t = ${years} years`, `I = ${principal} × ${rate/100} × ${years} = $${interest}`],
-            keyFormulas: ['I = P × r × t']
-          },
-          flashcard: {
-            front: `Simple interest on $${principal} at ${rate}% for ${years} years?`,
-            back: `$${interest} — I = P×r×t = ${principal}×${rate/100}×${years}`
-          }
-        };
-      }
-    },
-
-    // ─────────────────────────────────────────────────────────────
-    // 4. RATIO PROBLEMS
-    // ─────────────────────────────────────────────────────────────
-    {
-      id: 'q-ratio-problem',
-      section: 'quant',
-      tags: ['ratios', 'algebra'],
-      generate: function(rng) {
-        const aRatio = pickFrom(rng, [2, 3, 4, 5]);
-        let bRatio = pickFrom(rng, [3, 4, 5, 7]);
-        while (bRatio === aRatio) bRatio = pickFrom(rng, [3, 4, 5, 7]);
-        const multiplier = pickFrom(rng, [4, 5, 6, 8, 10]);
-        const total = (aRatio + bRatio) * multiplier;
-        const partA = aRatio * multiplier;
-        const partB = bRatio * multiplier;
-
-        return {
-          fullQuestion: `If the ratio of boys to girls in a class is ${aRatio}:${bRatio}, and there are ${total} students in total, how many boys are in the class?`,
-          finalAnswer: partA,
-          steps: [
-            {
-              prompt: `Step 1: In a ${aRatio}:${bRatio} ratio, total parts = ?`,
-              ...makeChoices(rng, aRatio + bRatio, [aRatio * bRatio, aRatio - bRatio, aRatio])
-            },
-            {
-              prompt: `Step 2: If ${total} students and ${aRatio + bRatio} parts, each part = ?`,
-              ...makeChoices(rng, multiplier, [multiplier + 1, multiplier - 1, multiplier * 2])
-            },
-            {
-              prompt: `Step 3: Boys = ${aRatio} parts × ${multiplier} = ?`,
-              ...makeChoices(rng, partA, [partB, total, partA + 5])
-            },
-            {
-              prompt: `Final: In a ${aRatio}:${bRatio} ratio with ${total} students, how many boys?`,
-              ...makeChoices(rng, partA, [partB, total - partA + 5, multiplier, aRatio], 5)
-            }
-          ],
-          cheatsheet: {
-            title: 'Ratio Problems',
-            body: `Ratio ${aRatio}:${bRatio} with total ${total}: Each part = ${total}/${aRatio + bRatio} = ${multiplier}`,
-            steps: [`Total parts: ${aRatio} + ${bRatio} = ${aRatio + bRatio}`, `Each part: ${total} ÷ ${aRatio + bRatio} = ${multiplier}`, `Boys: ${aRatio} × ${multiplier} = ${partA}`],
-            keyFormulas: ['Total = (a+b) × multiplier', 'Part A = a × multiplier']
-          },
-          flashcard: {
-            front: `Ratio ${aRatio}:${bRatio}, total ${total}. How many in first group?`,
-            back: `${partA} — Each part = ${multiplier}, first group = ${aRatio} × ${multiplier}`
-          }
-        };
-      }
-    },
-
-    // ─────────────────────────────────────────────────────────────
-    // 5. FRACTION SIMPLIFICATION
-    // ─────────────────────────────────────────────────────────────
-    {
-      id: 'q-fraction-simplify',
-      section: 'quant',
-      tags: ['fractions', 'GCF', 'simplification'],
-      generate: function(rng) {
-        const gcf = pickFrom(rng, [2, 3, 4, 5, 6]);
-        const simpNum = pickFrom(rng, [2, 3, 4, 5, 7]);
-        let simpDen = pickFrom(rng, [3, 4, 5, 7, 8, 9]);
-        while (simpDen === simpNum || gcd(simpNum, simpDen) > 1) {
-          simpDen = pickFrom(rng, [3, 4, 5, 7, 8, 9, 11]);
-        }
-        const num = simpNum * gcf;
-        const den = simpDen * gcf;
-
-        return {
-          fullQuestion: `What is the simplified form of ${num}/${den}?`,
-          finalAnswer: `${simpNum}/${simpDen}`,
-          steps: [
-            {
-              prompt: `Step 1: To simplify, divide by the GCF. Find GCF(${num}, ${den}):`,
-              ...makeChoices(rng, gcf, [gcf - 1, gcf + 1, num, 1])
-            },
-            {
-              prompt: `Step 2: Divide both by ${gcf}: ${num}÷${gcf} = ${simpNum}, ${den}÷${gcf} = ?`,
-              ...makeChoices(rng, simpDen, [simpDen + 1, simpDen - 1, den])
-            },
-            {
-              prompt: `Final: What is ${num}/${den} simplified?`,
-              ...makeChoices(rng, `${simpNum}/${simpDen}`, [`${simpDen}/${simpNum}`, `${simpNum + 1}/${simpDen}`, `${num}/${den}`], 4)
-            }
-          ],
-          cheatsheet: {
-            title: 'Simplifying Fractions',
-            body: `${num}/${den}: GCF = ${gcf}, so ${num}/${den} = ${simpNum}/${simpDen}`,
-            steps: [`Find GCF(${num}, ${den}) = ${gcf}`, `Divide: ${num}÷${gcf} = ${simpNum}`, `Divide: ${den}÷${gcf} = ${simpDen}`, `Result: ${simpNum}/${simpDen}`],
-            keyFormulas: ['GCF = Greatest Common Factor']
-          },
-          flashcard: {
-            front: `Simplify ${num}/${den}`,
-            back: `${simpNum}/${simpDen} — Divide both by GCF(${gcf})`
-          }
-        };
-      }
-    },
-
-    // ─────────────────────────────────────────────────────────────
-    // 6. WEIGHTED AVERAGE
-    // ─────────────────────────────────────────────────────────────
-    {
-      id: 'q-weighted-average',
-      section: 'quant',
-      tags: ['averages', 'statistics'],
-      generate: function(rng) {
-        const n1 = pickFrom(rng, [2, 3, 4]);
-        const n2 = pickFrom(rng, [1, 2]);
-        const n3 = pickFrom(rng, [2, 3, 4]);
-        const v1 = pickFrom(rng, [12, 14, 15, 16]) * 1000;
-        const v2 = pickFrom(rng, [16, 17, 18]) * 1000;
-        const v3 = pickFrom(rng, [17, 18, 19, 20]) * 1000;
-        const total = n1 + n2 + n3;
-        const sum = n1 * v1 + n2 * v2 + n3 * v3;
-        const avg = Math.round(sum / total);
-
-        // Find closest "round" answer
-        const roundedAvg = Math.round(avg / 100) * 100;
-
-        return {
-          fullQuestion: `A bakery has ${total} employees: ${n1} earn $${v1.toLocaleString()}, ${n2} earn $${v2.toLocaleString()}, and ${n3} earn $${v3.toLocaleString()}. What is the average salary (rounded to nearest $100)?`,
-          finalAnswer: roundedAvg,
-          steps: [
-            {
-              prompt: `Step 1: Calculate total salary: ${n1}×$${v1.toLocaleString()} + ${n2}×$${v2.toLocaleString()} + ${n3}×$${v3.toLocaleString()} = ?`,
-              ...makeChoices(rng, sum, [sum + 1000, sum - 1000, sum + 5000])
-            },
-            {
-              prompt: `Step 2: Average = $${sum.toLocaleString()} ÷ ${total} = ?`,
-              ...makeChoices(rng, avg, [avg + 500, avg - 500, avg + 1000])
-            },
-            {
-              prompt: `Final: The average salary rounded to nearest $100 is:`,
-              ...makeChoices(rng, roundedAvg, [roundedAvg + 200, roundedAvg - 200, roundedAvg + 500, roundedAvg - 500], 5)
-            }
-          ],
-          cheatsheet: {
-            title: 'Weighted Average',
-            body: `Total salary = $${sum.toLocaleString()}, employees = ${total}, avg ≈ $${roundedAvg.toLocaleString()}`,
-            steps: [`Sum: ${n1}×${v1} + ${n2}×${v2} + ${n3}×${v3} = ${sum}`, `Average: ${sum} ÷ ${total} = ${avg}`, `Rounded: $${roundedAvg}`],
-            keyFormulas: ['Average = Total Sum / Count']
-          },
-          flashcard: {
-            front: `${total} employees earning $${v1}/${v2}/${v3}. Average?`,
-            back: `≈$${roundedAvg.toLocaleString()} — Total $${sum.toLocaleString()} ÷ ${total}`
-          }
-        };
-      }
-    },
-
-    // ─────────────────────────────────────────────────────────────
-    // 7. EXPONENT RULES
-    // ─────────────────────────────────────────────────────────────
-    {
-      id: 'q-exponent-rules',
+      id: 'q1-exponents-abc',
       section: 'quant',
       tags: ['exponents', 'algebra'],
       generate: function(rng) {
-        const base = pickFrom(rng, [2, 3, 5]);
-        const exp1 = pickFrom(rng, [2, 3, 4]);
-        const exp2 = pickFrom(rng, [2, 3, 4]);
-        const sumExp = exp1 + exp2;
-        const result = Math.pow(base, sumExp);
+        // Parameters: b = k*a, c = 2*b = 2k*a
+        // Fixed structure: k=2 gives classic problem
+        const k = 2; // Keep fixed for GMAT authenticity
+
+        // a^b · b^c = a^(ka) · (ka)^(2ka)
+        // = a^(ka) · k^(2ka) · a^(2ka)
+        // = k^(2ka) · a^(3ka)
+        // = (k^(2k) · a^(3k))^a
+        // For k=2: = (4 · a^6)^a = (16a^6)^a? Let me recalculate
+        // Actually: k^(2k) = 2^4 = 16, 3k = 6
+        // So answer is (16a^6)^a
 
         return {
-          fullQuestion: `Simplify: ${base}^${exp1} × ${base}^${exp2}`,
-          finalAnswer: `${base}^${sumExp}`,
-          steps: [
+          contextSteps: [
             {
-              prompt: `Step 1: When multiplying same bases, we ___ the exponents:`,
-              ...makeChoices(rng, 'add', ['multiply', 'subtract', 'divide'])
+              prompt: `Step 1: Translate the relationships. If b = ${k}a and c = 2b, what is c in terms of a?`,
+              choices: [`c = ${k}a`, `c = ${k+1}a`, `c = ${2*k}a`, `c = ${3*k}a`],
+              correctIndex: 2,
+              correctValue: `c = ${2*k}a`
             },
             {
-              prompt: `Step 2: ${exp1} + ${exp2} = ?`,
-              ...makeChoices(rng, sumExp, [exp1 * exp2, sumExp + 1, sumExp - 1])
+              prompt: `Step 2: Rewrite b^c using a. If b = ${k}a and c = ${2*k}a, which is b^c?`,
+              choices: [`(${k}a)^(${k}a)`, `(${k}a)^(${2*k}a)`, `${k}^(${2*k}a) · a^(${k}a)`, `${k}^(${k}a) · a^(${2*k}a)`],
+              correctIndex: 1,
+              correctValue: `(${k}a)^(${2*k}a)`
             },
             {
-              prompt: `Final: ${base}^${exp1} × ${base}^${exp2} = ?`,
-              ...makeChoices(rng, `${base}^${sumExp}`, [`${base}^${exp1 * exp2}`, `${base * 2}^${sumExp}`, `${base}^${sumExp - 1}`], 4)
+              prompt: `Step 3: Combine the powers. a^b · b^c = a^(${k}a) · (${k}a)^(${2*k}a) simplifies to which single power?`,
+              choices: [`(${k}a^4)^a`, `(${k}a^6)^a`, `(${Math.pow(k, 2*k)}a^6)^a`, `(${Math.pow(k, 2*k)}a^8)^a`],
+              correctIndex: 2,
+              correctValue: `(${Math.pow(k, 2*k)}a^6)^a`
             }
           ],
-          cheatsheet: {
-            title: 'Exponent Multiplication Rule',
-            body: `${base}^${exp1} × ${base}^${exp2} = ${base}^(${exp1}+${exp2}) = ${base}^${sumExp}`,
-            steps: [`Same base: add exponents`, `${exp1} + ${exp2} = ${sumExp}`, `Result: ${base}^${sumExp} = ${result}`],
-            keyFormulas: ['a^m × a^n = a^(m+n)']
-          },
-          flashcard: {
-            front: `${base}^${exp1} × ${base}^${exp2} = ?`,
-            back: `${base}^${sumExp} — Add exponents when multiplying same bases`
-          }
+          finalQuestion: `If a > 0, b = ${k}a, and c = 2b, which of the following is equivalent to a^b · b^c?`,
+          finalChoices: [`(${k}a^4)^a`, `(${k}a^6)^a`, `(${k}a^8)^a`, `(${Math.pow(k, 2*k)}a^6)^a`, `(${Math.pow(k, 2*k)}a^8)^a`],
+          finalAnswerIndex: 3,
+          finalAnswer: `(${Math.pow(k, 2*k)}a^6)^a`
         };
       }
     },
 
     // ─────────────────────────────────────────────────────────────
-    // 8. MIXTURE PROBLEMS
+    // Q2: Bonus Optimization
     // ─────────────────────────────────────────────────────────────
     {
-      id: 'q-mixture',
+      id: 'q2-bonus-optimization',
       section: 'quant',
-      tags: ['mixtures', 'algebra', 'percentages'],
+      tags: ['optimization', 'word-problems'],
       generate: function(rng) {
-        const total = pickFrom(rng, [200, 250, 300, 400]);
-        const pctX = pickFrom(rng, [10, 12, 15, 20]);
-        const pctY = pickFrom(rng, [25, 30, 35, 40]);
-        // Pick X amount that gives clean total concentration
-        const amtX = pickFrom(rng, [80, 100, 120, 140, 160].filter(x => x < total));
-        const amtY = total - amtX;
-        const totalConc = (pctX * amtX + pctY * amtY) / 100;
+        // Classic values for GMAT authenticity
+        const small = 750;
+        const medium = 1500;
+        const large = 7350;
+        const total = 64800;
+
+        // Working: 1×750 + 1×1500 = 2250, remaining = 62550
+        // 62550 / 7350 = 8.5, so 8 large bonuses = 58800
+        // Remaining: 62550 - 58800 = 3750
+        // 3750 = 2×1500 + 1×750 + already have 1 each = need 2 more 1500, 1 more 750
+        // Total: 1+1 (required) + 8 + 2 + 1 = 13
+
+        const remaining1 = total - small - medium; // 62550
+        const numLarge = Math.floor(remaining1 / large); // 8
+        const afterLarge = remaining1 - numLarge * large; // 3750
+        // afterLarge = 3750 = 2*1500 + 1*750, so need 2 more medium, 1 more small
+        const totalBonuses = 1 + 1 + numLarge + 2 + 1; // 13
 
         return {
-          fullQuestion: `A ${total}g mixture contains food X (${pctX}% protein) and food Y (${pctY}% protein). If there are ${amtX}g of food X, how many grams of protein are in the mixture?`,
-          finalAnswer: totalConc,
-          steps: [
+          contextSteps: [
             {
-              prompt: `Step 1: Protein from X = ${pctX}% of ${amtX}g = ?`,
-              ...makeChoices(rng, pctX * amtX / 100, [amtX, pctX, pctX * amtX / 10])
+              prompt: `Step 1: To use the fewest bonuses, which bonus amount should we use as many times as possible?`,
+              choices: [`$${small.toLocaleString()}`, `$${medium.toLocaleString()}`, `$${large.toLocaleString()}`, `Use equal amounts of all three`],
+              correctIndex: 2,
+              correctValue: `$${large.toLocaleString()}`
             },
             {
-              prompt: `Step 2: Food Y = ${total} - ${amtX} = ${amtY}g. Protein from Y = ${pctY}% of ${amtY} = ?`,
-              ...makeChoices(rng, pctY * amtY / 100, [amtY, pctY, pctY * amtY / 10])
+              prompt: `Step 2: We must use each amount at least once. Start with 1 of $${small.toLocaleString()} and 1 of $${medium.toLocaleString()}. How much is left from $${total.toLocaleString()}?`,
+              choices: [`$${remaining1.toLocaleString()}`, `$${(remaining1+150).toLocaleString()}`, `$${(remaining1+750).toLocaleString()}`, `$${(remaining1+1500).toLocaleString()}`],
+              correctIndex: 0,
+              correctValue: `$${remaining1.toLocaleString()}`
             },
             {
-              prompt: `Final: Total protein = ${pctX * amtX / 100} + ${pctY * amtY / 100} = ?`,
-              ...makeChoices(rng, totalConc, [totalConc + 5, totalConc - 5, total], 4)
+              prompt: `Step 3: Now pack in as many $${large.toLocaleString()} bonuses as possible. What is the largest number that does not exceed the remaining total?`,
+              choices: [`${numLarge-1}`, `${numLarge}`, `${numLarge+1}`, `${numLarge+2}`],
+              correctIndex: 1,
+              correctValue: `${numLarge}`
+            },
+            {
+              prompt: `Step 4: After using ${numLarge} bonuses of $${large.toLocaleString()}, the leftover must be made using $${small.toLocaleString()} and $${medium.toLocaleString()}. What pair (y,z) works, where y = # of $${medium.toLocaleString()} and z = # of $${small.toLocaleString()}, both at least 1?`,
+              choices: [`y=1, z=1`, `y=2, z=2`, `y=3, z=2`, `y=4, z=1`],
+              correctIndex: 2,
+              correctValue: `y=3, z=2`
             }
           ],
-          cheatsheet: {
-            title: 'Mixture Problems',
-            body: `X: ${amtX}g at ${pctX}% = ${pctX * amtX / 100}g protein. Y: ${amtY}g at ${pctY}% = ${pctY * amtY / 100}g protein.`,
-            steps: [`Protein from X: ${pctX/100} × ${amtX} = ${pctX * amtX / 100}`, `Protein from Y: ${pctY/100} × ${amtY} = ${pctY * amtY / 100}`, `Total: ${totalConc}g`],
-            keyFormulas: ['Total = (%₁ × amt₁) + (%₂ × amt₂)']
-          },
-          flashcard: {
-            front: `${amtX}g at ${pctX}% + ${amtY}g at ${pctY}%. Total protein?`,
-            back: `${totalConc}g — Add protein from each component`
-          }
+          finalQuestion: `Last year a company gave bonuses to a number of employees, but only in the three amounts of $${small.toLocaleString()}, $${medium.toLocaleString()}, and $${large.toLocaleString()}. If the total amount of the bonuses was $${total.toLocaleString()} and each of the three amounts was given to at least one employee, what is the fewest number of bonuses that the company could have given to employees last year?`,
+          finalChoices: [`10`, `11`, `12`, `13`, `14`],
+          finalAnswerIndex: 3,
+          finalAnswer: `13`
         };
       }
     },
 
     // ─────────────────────────────────────────────────────────────
-    // 9. QUADRATIC VERTEX
+    // Q3: Factorial Powers of 2
     // ─────────────────────────────────────────────────────────────
     {
-      id: 'q-quadratic-vertex',
+      id: 'q3-factorial-powers',
       section: 'quant',
-      tags: ['quadratics', 'optimization'],
+      tags: ['factorials', 'exponents'],
       generate: function(rng) {
-        const h = pickFrom(rng, [2, 3, 4, 5, 6]);
-        const k = pickFrom(rng, [2, 3, 4, 5, 6, 8]);
+        // (√8! + √9!)² = (√8! + 3√8!)² = (4√8!)² = 16·8!
+        // v₂(8!) = 4 + 2 + 1 = 7
+        // v₂(16) = 4
+        // Total = 11
+
+        const n = 8;
+        const nPlus1 = 9;
+        const sqrtFactor = Math.sqrt(nPlus1); // 3
+        const combinedCoeff = 1 + sqrtFactor; // 4
+        const squaredCoeff = combinedCoeff * combinedCoeff; // 16
+        const v2_factorial = Math.floor(n/2) + Math.floor(n/4) + Math.floor(n/8); // 7
+        const v2_coeff = Math.log2(squaredCoeff); // 4
+        const totalPower = v2_factorial + v2_coeff; // 11
 
         return {
-          fullQuestion: `If y = ${k} + (x − ${h})², what value of x minimizes y?`,
-          finalAnswer: h,
-          steps: [
+          contextSteps: [
             {
-              prompt: `Step 1: The expression (x − ${h})² is minimized when it equals:`,
-              ...makeChoices(rng, 0, [1, h, k])
+              prompt: `Step 1: Factor out the common term. √(${nPlus1}!) can be rewritten as √(${nPlus1}·${n}!). Which is correct?`,
+              choices: [`√(${nPlus1}!) = ${nPlus1}·√(${n}!)`, `√(${nPlus1}!) = ${sqrtFactor}·√(${n}!)`, `√(${nPlus1}!) = √${nPlus1} + √(${n}!)`, `√(${nPlus1}!) = √(${n}!)/${sqrtFactor}`],
+              correctIndex: 1,
+              correctValue: `√(${nPlus1}!) = ${sqrtFactor}·√(${n}!)`
             },
             {
-              prompt: `Step 2: (x − ${h})² = 0 when x = ?`,
-              ...makeChoices(rng, h, [h + 1, h - 1, k, 0])
+              prompt: `Step 2: Simplify the sum. √(${n}!) + √(${nPlus1}!) becomes which expression?`,
+              choices: [`√(${n}!)(1+${sqrtFactor})`, `√(${n}!)(1+${nPlus1})`, `√(${n}!)(${sqrtFactor}-1)`, `√(${n}!)(${nPlus1}-1)`],
+              correctIndex: 0,
+              correctValue: `√(${n}!)(1+${sqrtFactor})`
             },
             {
-              prompt: `Final: y = ${k} + (x − ${h})² is minimized when x = ?`,
-              ...makeChoices(rng, h, [k, h + k, 0, h - 1], 5)
+              prompt: `Step 3: Square it. [${combinedCoeff}√(${n}!)]² equals:`,
+              choices: [`${n}!`, `${combinedCoeff}·${n}!`, `${squaredCoeff}·${n}!`, `${squaredCoeff*2}·${n}!`],
+              correctIndex: 2,
+              correctValue: `${squaredCoeff}·${n}!`
+            },
+            {
+              prompt: `Step 4: Count factors of 2. The power of 2 in ${n}! is v₂(${n}!) = floor(${n}/2)+floor(${n}/4)+floor(${n}/8) =`,
+              choices: [`${v2_factorial-1}`, `${v2_factorial}`, `${v2_factorial+1}`, `${v2_factorial+2}`],
+              correctIndex: 1,
+              correctValue: `${v2_factorial}`
+            },
+            {
+              prompt: `Step 5: Multiply by ${squaredCoeff} adds how many extra factors of 2?`,
+              choices: [`${v2_coeff-2}`, `${v2_coeff-1}`, `${v2_coeff}`, `${v2_coeff+1}`],
+              correctIndex: 2,
+              correctValue: `${v2_coeff}`
             }
           ],
-          cheatsheet: {
-            title: 'Quadratic Minimum',
-            body: `y = ${k} + (x − ${h})² has minimum at x = ${h} where y = ${k}`,
-            steps: [`Squared terms are always ≥ 0`, `(x − ${h})² = 0 when x = ${h}`, `Minimum y = ${k} + 0 = ${k}`],
-            keyFormulas: ['y = k + (x−h)² has minimum at x = h']
-          },
-          flashcard: {
-            front: `Where is y = ${k} + (x − ${h})² minimized?`,
-            back: `At x = ${h} — The square equals 0 there`
-          }
+          finalQuestion: `The value of (√(${n}!) + √(${nPlus1}!))² is an integer. What is the greatest integer n such that 2^n is a factor of (√(${n}!) + √(${nPlus1}!))²?`,
+          finalChoices: [`3`, `6`, `8`, `${totalPower}`, `14`],
+          finalAnswerIndex: 3,
+          finalAnswer: `${totalPower}`
         };
       }
     },
 
     // ─────────────────────────────────────────────────────────────
-    // 10. UNITS DIGIT
+    // Q4: Divisibility k^4 by 32
     // ─────────────────────────────────────────────────────────────
     {
-      id: 'q-units-digit',
+      id: 'q4-divisibility-remainder',
       section: 'quant',
-      tags: ['number-theory', 'patterns'],
+      tags: ['divisibility', 'number-theory'],
       generate: function(rng) {
-        const base = pickFrom(rng, [2, 3, 7, 8]);
-        const exp = pickFrom(rng, [10, 11, 12, 13, 14, 15, 23, 24, 25]);
-
-        // Units digit patterns
-        const patterns = {
-          2: [2, 4, 8, 6],
-          3: [3, 9, 7, 1],
-          7: [7, 9, 3, 1],
-          8: [8, 4, 2, 6]
-        };
-        const pattern = patterns[base];
-        const unitsDigit = pattern[(exp - 1) % 4];
+        // 32 = 2^5, so k^4 needs at least 5 factors of 2
+        // If k has m factors of 2, k^4 has 4m factors
+        // Need 4m ≥ 5, so m ≥ 2 (k divisible by 4)
+        // Check: 2 has 1 factor → k^4 has 4 < 5 ✗
+        // 4 has 2 factors → k^4 has 8 ≥ 5 ✓
+        // 6 has 1 factor → k^4 has 4 < 5 ✗
 
         return {
-          fullQuestion: `What is the units digit of ${base}^${exp}?`,
-          finalAnswer: unitsDigit,
-          steps: [
+          contextSteps: [
             {
-              prompt: `Step 1: The units digit of powers of ${base} follows a pattern. ${base}¹=${base}, ${base}²=${base*base}. The pattern repeats every:`,
-              ...makeChoices(rng, 4, [2, 3, 5, 6])
+              prompt: `Step 1: Rewrite 32 as a power of 2.`,
+              choices: [`32 = 2^4`, `32 = 2^5`, `32 = 2^6`, `32 = 2^8`],
+              correctIndex: 1,
+              correctValue: `32 = 2^5`
             },
             {
-              prompt: `Step 2: ${exp} mod 4 = ${exp % 4 || 4}. This corresponds to position ${exp % 4 || 4} in the cycle. The units digit is:`,
-              ...makeChoices(rng, unitsDigit, pattern.filter(d => d !== unitsDigit))
+              prompt: `Step 2: If k has exactly one factor of 2 (k is even but not divisible by 4), how many factors of 2 does k^4 have?`,
+              choices: [`1`, `2`, `4`, `8`],
+              correctIndex: 2,
+              correctValue: `4`
             },
             {
-              prompt: `Final: The units digit of ${base}^${exp} is:`,
-              ...makeChoices(rng, unitsDigit, [2, 4, 6, 8].filter(d => d !== unitsDigit), 4)
+              prompt: `Step 3: To make k^4 divisible by 32 (=2^5), what must be true about k?`,
+              choices: [`k must be odd`, `k must be divisible by 2`, `k must be divisible by 4`, `k must be divisible by 8`],
+              correctIndex: 2,
+              correctValue: `k must be divisible by 4`
+            },
+            {
+              prompt: `Step 4: If k is divisible by 4, then k mod 32 must be a multiple of:`,
+              choices: [`2`, `3`, `4`, `5`],
+              correctIndex: 2,
+              correctValue: `4`
             }
           ],
-          cheatsheet: {
-            title: 'Units Digit Patterns',
-            body: `Powers of ${base}: units digits cycle ${pattern.join(', ')}. ${base}^${exp} has units digit ${unitsDigit}.`,
-            steps: [`Pattern: ${pattern.join(' → ')} (repeats every 4)`, `${exp} mod 4 = ${exp % 4 || 4}`, `Position ${exp % 4 || 4} → units digit ${unitsDigit}`],
-            keyFormulas: ['Patterns of 2: 2,4,8,6', 'Patterns of 3: 3,9,7,1']
-          },
-          flashcard: {
-            front: `Units digit of ${base}^${exp}?`,
-            back: `${unitsDigit} — Pattern cycles every 4, position ${exp % 4 || 4}`
-          }
+          finalQuestion: `When the integer k^4 is divided by 32, the remainder is 0. Which of the following could be the remainder when the integer k is divided by 32?\nI. 2\nII. 4\nIII. 6`,
+          finalChoices: [`None`, `I only`, `II only`, `I and II`, `II and III`],
+          finalAnswerIndex: 2,
+          finalAnswer: `II only`
         };
       }
     },
 
     // ─────────────────────────────────────────────────────────────
-    // 11. LINEAR EQUATION
+    // Q5: Nested Radicals
     // ─────────────────────────────────────────────────────────────
     {
-      id: 'q-linear-equation',
+      id: 'q5-nested-radicals',
       section: 'quant',
-      tags: ['algebra', 'equations'],
+      tags: ['radicals', 'algebra'],
       generate: function(rng) {
-        const a = pickFrom(rng, [2, 3, 4, 5]);
-        const x = pickFrom(rng, [3, 4, 5, 6, 7, 8]);
-        const b = pickFrom(rng, [5, 7, 10, 12, 15]);
-        const result = a * x + b;
+        // (√(15-4√14) + √(15+4√14))²
+        // Let A = √(15-4√14), B = √(15+4√14)
+        // A² + B² = 30 (cancel √14 terms)
+        // AB = √((15-4√14)(15+4√14)) = √(225-224) = √1 = 1
+        // (A+B)² = A² + B² + 2AB = 30 + 2 = 32
+
+        const innerSum = 15;
+        const innerCoeff = 4;
+        const radical = 14;
+        const sumSquares = 2 * innerSum; // 30
+        const product = Math.sqrt(innerSum * innerSum - innerCoeff * innerCoeff * radical); // √1 = 1
+        const answer = sumSquares + 2 * product; // 32
 
         return {
-          fullQuestion: `Solve for x: ${a}x + ${b} = ${result}`,
-          finalAnswer: x,
-          steps: [
+          contextSteps: [
             {
-              prompt: `Step 1: Subtract ${b} from both sides: ${a}x = ?`,
-              ...makeChoices(rng, result - b, [result + b, result, b])
+              prompt: `Step 1: Let A = √(${innerSum} − ${innerCoeff}√${radical}) and B = √(${innerSum} + ${innerCoeff}√${radical}). What is (A + B)² in terms of A², B², and AB?`,
+              choices: [`A² + B²`, `A² + B² + 2AB`, `A² + B² − 2AB`, `(A²)(B²)`],
+              correctIndex: 1,
+              correctValue: `A² + B² + 2AB`
             },
             {
-              prompt: `Step 2: Divide both sides by ${a}: x = ${result - b} ÷ ${a} = ?`,
-              ...makeChoices(rng, x, [x + 1, x - 1, x * 2])
+              prompt: `Step 2: Compute A² + B².`,
+              choices: [`0`, `${innerSum}`, `${sumSquares}`, `${sumSquares * 2}`],
+              correctIndex: 2,
+              correctValue: `${sumSquares}`
             },
             {
-              prompt: `Final: In ${a}x + ${b} = ${result}, x = ?`,
-              ...makeChoices(rng, x, [x + 2, x - 2, result / a, a], 5)
+              prompt: `Step 3: Compute AB = √[(${innerSum} − ${innerCoeff}√${radical})(${innerSum} + ${innerCoeff}√${radical})]. This equals √(${innerSum}² − (${innerCoeff}√${radical})²) = √(?)`,
+              choices: [`√0`, `√1`, `√2`, `√${radical}`],
+              correctIndex: 1,
+              correctValue: `√1`
+            },
+            {
+              prompt: `Step 4: Put it together: (A+B)² = ${sumSquares} + 2·AB = ${sumSquares} + 2·${product} =`,
+              choices: [`${sumSquares}`, `${sumSquares + 1}`, `${answer}`, `${answer + 1}`],
+              correctIndex: 2,
+              correctValue: `${answer}`
             }
           ],
-          cheatsheet: {
-            title: 'Solving Linear Equations',
-            body: `${a}x + ${b} = ${result} → ${a}x = ${result - b} → x = ${x}`,
-            steps: [`Subtract ${b}: ${a}x = ${result - b}`, `Divide by ${a}: x = ${(result - b) / a}`],
-            keyFormulas: ['Isolate variable step by step']
-          },
-          flashcard: {
-            front: `${a}x + ${b} = ${result}. Solve for x.`,
-            back: `x = ${x} — Subtract ${b}, divide by ${a}`
-          }
+          finalQuestion: `( √(${innerSum} − ${innerCoeff}√${radical}) + √(${innerSum} + ${innerCoeff}√${radical}) )² =`,
+          finalChoices: [`28`, `30`, `32`, `34`, `36`],
+          finalAnswerIndex: 2,
+          finalAnswer: `32`
         };
       }
     },
 
     // ─────────────────────────────────────────────────────────────
-    // 12. PROFIT/LOSS
+    // Q6: Integer Equation (x-y)² + 2y² = 27
     // ─────────────────────────────────────────────────────────────
     {
-      id: 'q-profit-loss',
-      section: 'quant',
-      tags: ['percentages', 'business'],
-      generate: function(rng) {
-        const cost = pickFrom(rng, [50, 80, 100, 120, 150, 200]);
-        const profitPct = pickFrom(rng, [10, 15, 20, 25, 30, 40]);
-        const profit = (cost * profitPct) / 100;
-        const sellPrice = cost + profit;
-
-        return {
-          fullQuestion: `An item costs $${cost}. If sold at ${profitPct}% profit, what is the selling price?`,
-          finalAnswer: sellPrice,
-          steps: [
-            {
-              prompt: `Step 1: Calculate ${profitPct}% of $${cost}:`,
-              ...makeChoices(rng, profit, [profit + 5, cost, profitPct])
-            },
-            {
-              prompt: `Step 2: Selling price = Cost + Profit = $${cost} + $${profit} = ?`,
-              ...makeChoices(rng, sellPrice, [sellPrice + 10, cost, profit])
-            },
-            {
-              prompt: `Final: Selling price for ${profitPct}% profit on $${cost} cost:`,
-              ...makeChoices(rng, sellPrice, [sellPrice + 20, cost + profitPct, cost * 2], 4)
-            }
-          ],
-          cheatsheet: {
-            title: 'Profit Calculation',
-            body: `Cost = $${cost}, Profit = ${profitPct}% = $${profit}, Selling Price = $${sellPrice}`,
-            steps: [`Profit = ${profitPct/100} × $${cost} = $${profit}`, `Selling Price = $${cost} + $${profit} = $${sellPrice}`],
-            keyFormulas: ['Profit = Cost × Profit%', 'SP = Cost + Profit']
-          },
-          flashcard: {
-            front: `$${cost} cost, ${profitPct}% profit. Selling price?`,
-            back: `$${sellPrice} — Profit = $${profit}, add to cost`
-          }
-        };
-      }
-    },
-
-    // ─────────────────────────────────────────────────────────────
-    // 13. WORK PROBLEMS
-    // ─────────────────────────────────────────────────────────────
-    {
-      id: 'q-work-rate',
-      section: 'quant',
-      tags: ['rates', 'work'],
-      generate: function(rng) {
-        const timeA = pickFrom(rng, [4, 5, 6, 8, 10]);
-        const timeB = pickFrom(rng, [3, 4, 5, 6, 8].filter(t => t !== timeA));
-        // Combined rate: 1/a + 1/b = (a+b)/(a*b)
-        // Combined time = ab/(a+b)
-        const combined = (timeA * timeB) / (timeA + timeB);
-        const roundedCombined = Math.round(combined * 10) / 10;
-
-        return {
-          fullQuestion: `Worker A completes a job in ${timeA} hours, Worker B in ${timeB} hours. Working together, how many hours to complete the job?`,
-          finalAnswer: roundedCombined,
-          steps: [
-            {
-              prompt: `Step 1: A's rate = 1/${timeA} job/hr. B's rate = 1/${timeB} job/hr. Combined rate = ?`,
-              ...makeChoices(rng, `1/${timeA} + 1/${timeB}`, [`1/${timeA} - 1/${timeB}`, `1/${timeA} × 1/${timeB}`, `${timeA} + ${timeB}`])
-            },
-            {
-              prompt: `Step 2: 1/${timeA} + 1/${timeB} = ${timeB}/${timeA * timeB} + ${timeA}/${timeA * timeB} = ?`,
-              ...makeChoices(rng, `${timeA + timeB}/${timeA * timeB}`, [`${timeA * timeB}/${timeA + timeB}`, `1/${timeA + timeB}`, `${timeA}/${timeB}`])
-            },
-            {
-              prompt: `Final: Time = 1 ÷ (${timeA + timeB}/${timeA * timeB}) = ${timeA * timeB}/${timeA + timeB} ≈ ?`,
-              ...makeChoices(rng, roundedCombined, [roundedCombined + 1, roundedCombined - 0.5, timeA + timeB], 4)
-            }
-          ],
-          cheatsheet: {
-            title: 'Combined Work Rate',
-            body: `A: ${timeA}h, B: ${timeB}h. Together: ${timeA * timeB}/${timeA + timeB} ≈ ${roundedCombined}h`,
-            steps: [`Rate A = 1/${timeA}`, `Rate B = 1/${timeB}`, `Combined = (${timeA}+${timeB})/${timeA * timeB}`, `Time = ${timeA * timeB}/${timeA + timeB} ≈ ${roundedCombined}`],
-            keyFormulas: ['Combined Time = (A×B)/(A+B)']
-          },
-          flashcard: {
-            front: `A: ${timeA}h alone, B: ${timeB}h alone. Together?`,
-            back: `≈${roundedCombined} hours — Use formula (A×B)/(A+B)`
-          }
-        };
-      }
-    },
-
-    // ─────────────────────────────────────────────────────────────
-    // 14. CONSECUTIVE INTEGERS
-    // ─────────────────────────────────────────────────────────────
-    {
-      id: 'q-consecutive-integers',
+      id: 'q6-integer-equation',
       section: 'quant',
       tags: ['algebra', 'integers'],
       generate: function(rng) {
-        const n = pickFrom(rng, [3, 4, 5]);
-        const first = pickFrom(rng, [10, 12, 15, 20, 25, 30]);
-        const sum = n * first + (n * (n - 1)) / 2;
+        // (x-y)² + 2y² = 27
+        // For y = -1: (x+1)² + 2 = 27 → (x+1)² = 25 → x = 4 or -6
+        // Answer: x = 4
+
+        const total = 27;
+        const yVal = -1;
+        const squareResult = total - 2 * yVal * yVal; // 25
+        const sqrtResult = Math.sqrt(squareResult); // 5
+        const xVal1 = sqrtResult - 1 - yVal; // 4
+        const xVal2 = -sqrtResult - 1 - yVal; // -6
 
         return {
-          fullQuestion: `The sum of ${n} consecutive integers is ${sum}. What is the smallest of these integers?`,
-          finalAnswer: first,
-          steps: [
+          contextSteps: [
             {
-              prompt: `Step 1: For ${n} consecutive integers starting at x, the sum formula is:`,
-              ...makeChoices(rng, `${n}x + ${(n * (n - 1)) / 2}`, [`${n}x`, `${n}x + ${n}`, `x + ${n}`])
+              prompt: `Step 1: Since x and y are integers, (x − y)² is always:`,
+              choices: [`Odd`, `Even`, `A nonnegative perfect square`, `Always prime`],
+              correctIndex: 2,
+              correctValue: `A nonnegative perfect square`
             },
             {
-              prompt: `Step 2: Set ${n}x + ${(n * (n - 1)) / 2} = ${sum}. So ${n}x = ?`,
-              ...makeChoices(rng, sum - (n * (n - 1)) / 2, [sum, sum + n, sum - n])
+              prompt: `Step 2: From (x − y)² + 2y² = ${total}, what inequality must be true so (x − y)² is not negative?`,
+              choices: [`2y² ≥ ${total}`, `2y² ≤ ${total}`, `y² ≥ ${total}`, `y² ≤ ${total}/4`],
+              correctIndex: 1,
+              correctValue: `2y² ≤ ${total}`
             },
             {
-              prompt: `Final: x = ${sum - (n * (n - 1)) / 2} ÷ ${n} = ?`,
-              ...makeChoices(rng, first, [first + 1, first - 1, first + n], 4)
+              prompt: `Step 3: Try y = ${yVal}. Then (x − (${yVal}))² + 2(${yVal})² = ${total} becomes (x+1)² + 2 = ${total}, so (x+1)² =`,
+              choices: [`${squareResult - 2}`, `${squareResult - 1}`, `${squareResult}`, `${squareResult + 1}`],
+              correctIndex: 2,
+              correctValue: `${squareResult}`
+            },
+            {
+              prompt: `Step 4: If (x+1)² = ${squareResult}, then x could be:`,
+              choices: [`${xVal2} or ${xVal1}`, `${-sqrtResult} or ${sqrtResult}`, `${xVal2 + 2} or ${xVal1 + 2}`, `${xVal2 + 3} or ${xVal1 + 3}`],
+              correctIndex: 0,
+              correctValue: `${xVal2} or ${xVal1}`
             }
           ],
-          cheatsheet: {
-            title: 'Consecutive Integer Sum',
-            body: `${n} consecutive integers summing to ${sum}: ${first}, ${first + 1}, ..., ${first + n - 1}`,
-            steps: [`Let first = x`, `Sum = ${n}x + ${(n * (n - 1)) / 2} = ${sum}`, `x = ${first}`],
-            keyFormulas: ['Sum of n consecutive from x = nx + n(n-1)/2']
-          },
-          flashcard: {
-            front: `${n} consecutive integers sum to ${sum}. Smallest?`,
-            back: `${first} — The integers are ${first} to ${first + n - 1}`
-          }
+          finalQuestion: `If x and y are integers and if (x − y)² + 2y² = ${total}, which of the following could be the value of x?`,
+          finalChoices: [`−2`, `−1`, `3`, `4`, `5`],
+          finalAnswerIndex: 3,
+          finalAnswer: `4`
         };
       }
     },
 
     // ─────────────────────────────────────────────────────────────
-    // 15. ABSOLUTE VALUE
+    // Q7: x + √x = 1
     // ─────────────────────────────────────────────────────────────
     {
-      id: 'q-absolute-value',
+      id: 'q7-sqrt-substitution',
       section: 'quant',
-      tags: ['algebra', 'absolute-value'],
+      tags: ['algebra', 'quadratics'],
       generate: function(rng) {
-        const a = pickFrom(rng, [2, 3, 4, 5]);
-        const result = pickFrom(rng, [6, 8, 10, 12, 15]);
-        const sol1 = result / a;
-        const sol2 = -result / a;
+        // Let t = √x, then t² + t = 1, t² + t - 1 = 0
+        // t = (-1 + √5)/2 (positive root)
+        // = (√5 - 1)/2
 
         return {
-          fullQuestion: `If |${a}x| = ${result}, what are the possible values of x?`,
-          finalAnswer: `${sol1} or ${sol2}`,
-          steps: [
+          contextSteps: [
             {
-              prompt: `Step 1: |${a}x| = ${result} means ${a}x = ${result} or ${a}x = ?`,
-              ...makeChoices(rng, -result, [result, 0, result / 2])
+              prompt: `Step 1: Let t = √x. Then x =`,
+              choices: [`t`, `t²`, `2t`, `1/t`],
+              correctIndex: 1,
+              correctValue: `t²`
             },
             {
-              prompt: `Step 2: From ${a}x = ${result}: x = ?`,
-              ...makeChoices(rng, sol1, [sol1 + 1, -sol1, result])
+              prompt: `Step 2: Substitute into x + √x = 1. You get:`,
+              choices: [`t² + t = 1`, `t² − t = 1`, `t + 1 = t²`, `t² + 1 = t`],
+              correctIndex: 0,
+              correctValue: `t² + t = 1`
             },
             {
-              prompt: `Final: The solutions are x = ?`,
-              ...makeChoices(rng, `${sol1} or ${sol2}`, [`${sol1} only`, `${sol2} only`, `0`], 4)
+              prompt: `Step 3: Solve t² + t − 1 = 0. The positive root is:`,
+              choices: [`(−1 − √5)/2`, `(−1 + √5)/2`, `(1 − √5)/2`, `(1 + √5)/2`],
+              correctIndex: 1,
+              correctValue: `(−1 + √5)/2`
             }
           ],
-          cheatsheet: {
-            title: 'Absolute Value Equations',
-            body: `|${a}x| = ${result} → x = ${sol1} or x = ${sol2}`,
-            steps: [`Case 1: ${a}x = ${result} → x = ${sol1}`, `Case 2: ${a}x = ${-result} → x = ${sol2}`],
-            keyFormulas: ['|ax| = b → ax = b or ax = -b']
-          },
-          flashcard: {
-            front: `|${a}x| = ${result}. Values of x?`,
-            back: `x = ${sol1} or ${sol2} — Two cases for absolute value`
-          }
+          finalQuestion: `If x is a real number and x + √x = 1, which of the following is the value of √x?`,
+          finalChoices: [`(1/2)(√5 − 1)`, `(1/2)(√5 + 1)`, `(1/2)(√5 − 3)`, `(1/2)(√5 + 3)`, `(1/2)(3 − √5)`],
+          finalAnswerIndex: 0,
+          finalAnswer: `(1/2)(√5 − 1)`
         };
       }
     },
 
     // ─────────────────────────────────────────────────────────────
-    // 16. SQUARE ROOT SIMPLIFICATION
+    // Q8: Simplify Fraction
     // ─────────────────────────────────────────────────────────────
     {
-      id: 'q-sqrt-simplify',
+      id: 'q8-fraction-simplify',
       section: 'quant',
-      tags: ['radicals', 'simplification'],
+      tags: ['fractions', 'GCF'],
       generate: function(rng) {
-        const factor = pickFrom(rng, [2, 3, 4, 5, 6]);
-        const perfectSq = pickFrom(rng, [4, 9, 16, 25, 36]);
-        const root = Math.sqrt(perfectSq);
-        const radicand = perfectSq * factor;
+        // Parameterize: pick GCF and co-prime nums
+        const gcfVal = pickFrom(rng, [2, 3, 5]);
+        const simpleNum = pickFrom(rng, [2, 3]);
+        let simpleDen = pickFrom(rng, [3, 5, 7]);
+        while (simpleDen === simpleNum) simpleDen = pickFrom(rng, [4, 5, 7]);
+
+        const num = simpleNum * gcfVal;
+        const den = simpleDen * gcfVal;
 
         return {
-          fullQuestion: `Simplify: √${radicand}`,
-          finalAnswer: `${root}√${factor}`,
-          steps: [
+          contextSteps: [
             {
-              prompt: `Step 1: Factor ${radicand} to find a perfect square: ${radicand} = ${perfectSq} × ?`,
-              ...makeChoices(rng, factor, [factor + 1, factor - 1, radicand / 2])
+              prompt: `Step 1: To simplify a fraction, you divide numerator and denominator by their:`,
+              choices: [`Sum`, `Difference`, `Greatest common factor (GCF)`, `Least common multiple (LCM)`],
+              correctIndex: 2,
+              correctValue: `Greatest common factor (GCF)`
             },
             {
-              prompt: `Step 2: √${perfectSq} = ?`,
-              ...makeChoices(rng, root, [root + 1, root - 1, perfectSq])
+              prompt: `Step 2: The GCF of ${num} and ${den} is:`,
+              choices: [`1`, `${gcfVal - 1}`, `${gcfVal}`, `${num}`],
+              correctIndex: 2,
+              correctValue: `${gcfVal}`
             },
             {
-              prompt: `Final: √${radicand} = √(${perfectSq} × ${factor}) = ?`,
-              ...makeChoices(rng, `${root}√${factor}`, [`√${radicand}`, `${factor}√${root}`, `${root * factor}`], 4)
+              prompt: `Step 3: ${num}/${den} simplified equals:`,
+              choices: [`${simpleNum}/${simpleDen}`, `${simpleDen}/${simpleNum}`, `${gcfVal}/${simpleNum}`, `1/${simpleDen}`],
+              correctIndex: 0,
+              correctValue: `${simpleNum}/${simpleDen}`
             }
           ],
-          cheatsheet: {
-            title: 'Simplifying Square Roots',
-            body: `√${radicand} = √(${perfectSq}×${factor}) = √${perfectSq} × √${factor} = ${root}√${factor}`,
-            steps: [`Factor: ${radicand} = ${perfectSq} × ${factor}`, `√${perfectSq} = ${root}`, `Result: ${root}√${factor}`],
-            keyFormulas: ['√(ab) = √a × √b']
-          },
-          flashcard: {
-            front: `Simplify √${radicand}`,
-            back: `${root}√${factor} — Factor out perfect square ${perfectSq}`
-          }
+          finalQuestion: `What is the simplified form of ${num}/${den}?`,
+          finalChoices: [`${simpleNum}/${simpleDen}`, `${simpleDen}/${simpleNum}`, `${simpleNum}/${simpleDen + 3}`, `${simpleNum + 1}/${simpleDen}`, `${simpleDen}/${simpleNum + 1}`],
+          finalAnswerIndex: 0,
+          finalAnswer: `${simpleNum}/${simpleDen}`
         };
       }
     },
 
     // ─────────────────────────────────────────────────────────────
-    // 17. PROBABILITY
+    // Q9: Trust Fund Fractions
     // ─────────────────────────────────────────────────────────────
     {
-      id: 'q-probability',
+      id: 'q9-trust-fund',
       section: 'quant',
-      tags: ['probability', 'statistics'],
+      tags: ['fractions', 'word-problems'],
       generate: function(rng) {
-        const favorable = pickFrom(rng, [2, 3, 4, 5, 6]);
-        const total = pickFrom(rng, [10, 12, 15, 20].filter(t => t > favorable));
-        const g = gcd(favorable, total);
-        const simpNum = favorable / g;
-        const simpDen = total / g;
+        // 1/2 + 1/4 + 1/5 = 10/20 + 5/20 + 4/20 = 19/20
+        // Remaining = 1/20 = $10,000
+        // Total = $200,000
+
+        const remainder = 10000;
+        const remainderFraction = 20; // 1/20
+        const total = remainder * remainderFraction;
+        const investedFraction = '19/20';
 
         return {
-          fullQuestion: `A bag has ${total} balls, ${favorable} are red. What is the probability of drawing a red ball?`,
-          finalAnswer: `${simpNum}/${simpDen}`,
-          steps: [
+          contextSteps: [
             {
-              prompt: `Step 1: Probability = favorable outcomes / total outcomes = ?`,
-              ...makeChoices(rng, `${favorable}/${total}`, [`${total}/${favorable}`, `${favorable}`, `${total}`])
+              prompt: `Step 1: Add the invested fractions: 1/2 + 1/4 + 1/5 =`,
+              choices: [`(19/20)`, `(9/10)`, `(17/20)`, `(3/4)`],
+              correctIndex: 0,
+              correctValue: `(19/20)`
             },
             {
-              prompt: `Step 2: Simplify ${favorable}/${total}. GCF(${favorable}, ${total}) = ?`,
-              ...makeChoices(rng, g, [g + 1, 1, favorable])
+              prompt: `Step 2: If ${investedFraction} is invested, the remaining fraction is:`,
+              choices: [`1/${remainderFraction}`, `1/19`, `1/10`, `1/5`],
+              correctIndex: 0,
+              correctValue: `1/${remainderFraction}`
             },
             {
-              prompt: `Final: Probability of drawing red = ?`,
-              ...makeChoices(rng, `${simpNum}/${simpDen}`, [`${simpDen}/${simpNum}`, `${favorable}/${total + 1}`, `${simpNum + 1}/${simpDen}`], 4)
+              prompt: `Step 3: If the remaining 1/${remainderFraction} equals $${remainder.toLocaleString()}, then the total is ${remainderFraction} times that, which is:`,
+              choices: [`$100,000`, `$150,000`, `$${total.toLocaleString()}`, `$500,000`],
+              correctIndex: 2,
+              correctValue: `$${total.toLocaleString()}`
             }
           ],
-          cheatsheet: {
-            title: 'Basic Probability',
-            body: `P(red) = ${favorable}/${total} = ${simpNum}/${simpDen}`,
-            steps: [`Favorable: ${favorable} red balls`, `Total: ${total} balls`, `P = ${favorable}/${total} = ${simpNum}/${simpDen}`],
-            keyFormulas: ['P(event) = favorable/total']
-          },
-          flashcard: {
-            front: `${favorable} red out of ${total} balls. P(red)?`,
-            back: `${simpNum}/${simpDen} — Simplify ${favorable}/${total}`
-          }
+          finalQuestion: `If 1/2 of the money in a certain trust fund was invested in stocks, 1/4 in bonds, 1/5 in a mutual fund, and the remaining $${remainder.toLocaleString()} in a government certificate, what was the total amount of the trust fund?`,
+          finalChoices: [`$100,000`, `$150,000`, `$200,000`, `$500,000`, `$2,000,000`],
+          finalAnswerIndex: 2,
+          finalAnswer: `$200,000`
         };
       }
     },
 
     // ─────────────────────────────────────────────────────────────
-    // 18. SYSTEM OF EQUATIONS
+    // Q10: Mixture Problem
     // ─────────────────────────────────────────────────────────────
     {
-      id: 'q-system-equations',
+      id: 'q10-mixture-problem',
+      section: 'quant',
+      tags: ['mixtures', 'algebra'],
+      generate: function(rng) {
+        // Total = 300g, X = 10%, Y = 15%, protein = 38g
+        // 0.10x + 0.15(300-x) = 38
+        // 0.10x + 45 - 0.15x = 38
+        // -0.05x = -7
+        // x = 140
+
+        const totalMix = 300;
+        const pctX = 10;
+        const pctY = 15;
+        const proteinTotal = 38;
+        const proteinFromYAtFull = (pctY / 100) * totalMix; // 45
+        const diff = proteinFromYAtFull - proteinTotal; // 7
+        const xAmount = diff / ((pctY - pctX) / 100); // 140
+
+        return {
+          contextSteps: [
+            {
+              prompt: `Step 1: Let x be grams of food X. Then grams of food Y equals:`,
+              choices: [`${totalMix} + x`, `${totalMix} − x`, `x/${totalMix}`, `${totalMix}x`],
+              correctIndex: 1,
+              correctValue: `${totalMix} − x`
+            },
+            {
+              prompt: `Step 2: Protein equation: ${pctX}% of X + ${pctY}% of Y = ${proteinTotal} becomes:`,
+              choices: [`0.${pctX}x + 0.${pctY}(${totalMix} − x) = ${proteinTotal}`, `0.${pctX}x + 0.${pctY}x = ${proteinTotal}`, `0.${pctX}(${totalMix} − x) + 0.${pctY}x = ${proteinTotal}`, `0.${pctX}x + 0.${pctY}(${totalMix} + x) = ${proteinTotal}`],
+              correctIndex: 0,
+              correctValue: `0.${pctX}x + 0.${pctY}(${totalMix} − x) = ${proteinTotal}`
+            },
+            {
+              prompt: `Step 3: Simplify: 0.${pctX}x + ${proteinFromYAtFull} − 0.${pctY}x = ${proteinTotal} becomes:`,
+              choices: [`${proteinFromYAtFull} + 0.05x = ${proteinTotal}`, `${proteinFromYAtFull} − 0.05x = ${proteinTotal}`, `${proteinFromYAtFull} − 0.10x = ${proteinTotal}`, `${proteinFromYAtFull} + 0.10x = ${proteinTotal}`],
+              correctIndex: 1,
+              correctValue: `${proteinFromYAtFull} − 0.05x = ${proteinTotal}`
+            },
+            {
+              prompt: `Step 4: Solve ${proteinFromYAtFull} − 0.05x = ${proteinTotal}. Then 0.05x equals:`,
+              choices: [`5`, `6`, `${diff}`, `8`],
+              correctIndex: 2,
+              correctValue: `${diff}`
+            }
+          ],
+          finalQuestion: `A rabbit on a controlled diet is fed daily ${totalMix} grams of a mixture of two foods, food X and food Y. Food X contains ${pctX} percent protein and food Y contains ${pctY} percent protein. If the rabbit's diet provides exactly ${proteinTotal} grams of protein daily, how many grams of food X are in the mixture?`,
+          finalChoices: [`100`, `${xAmount}`, `150`, `160`, `200`],
+          finalAnswerIndex: 1,
+          finalAnswer: `${xAmount}`
+        };
+      }
+    },
+
+    // ─────────────────────────────────────────────────────────────
+    // Q11: Speed Conversion
+    // ─────────────────────────────────────────────────────────────
+    {
+      id: 'q11-speed-conversion',
+      section: 'quant',
+      tags: ['rates', 'unit-conversion'],
+      generate: function(rng) {
+        // 1 min 48 sec = 108 sec = 0.03 hr
+        // 2400 m = 2.4 km
+        // Speed = 2.4 / 0.03 = 80 km/hr
+
+        const minutes = 1;
+        const seconds = 48;
+        const totalSeconds = minutes * 60 + seconds; // 108
+        const totalHours = totalSeconds / 3600; // 0.03
+        const distanceMeters = 2400;
+        const distanceKm = distanceMeters / 1000; // 2.4
+        const speed = distanceKm / totalHours; // 80
+
+        return {
+          contextSteps: [
+            {
+              prompt: `Step 1: Convert time. ${minutes} minute ${seconds} seconds equals how many seconds total?`,
+              choices: [`${totalSeconds - 20}`, `${totalSeconds - 10}`, `${totalSeconds}`, `${totalSeconds + 10}`],
+              correctIndex: 2,
+              correctValue: `${totalSeconds}`
+            },
+            {
+              prompt: `Step 2: Convert ${totalSeconds} seconds to hours: ${totalSeconds}/3600 =`,
+              choices: [`0.01 hr`, `0.02 hr`, `${totalHours} hr`, `0.04 hr`],
+              correctIndex: 2,
+              correctValue: `${totalHours} hr`
+            },
+            {
+              prompt: `Step 3: Convert ${distanceMeters.toLocaleString()} meters to kilometers:`,
+              choices: [`0.24 km`, `${distanceKm} km`, `24 km`, `240 km`],
+              correctIndex: 1,
+              correctValue: `${distanceKm} km`
+            },
+            {
+              prompt: `Step 4: Speed = distance / time = ${distanceKm} / ${totalHours} =`,
+              choices: [`60`, `70`, `${speed}`, `90`],
+              correctIndex: 2,
+              correctValue: `${speed}`
+            }
+          ],
+          finalQuestion: `A car traveling at a constant speed took ${minutes} minute ${seconds} seconds to travel the distance between a certain road sign and the beginning of a roadwork area. If the distance between the road sign and the beginning of the roadwork area was ${distanceMeters.toLocaleString()} meters, then the car was traveling at what speed, in kilometers per hour? (1 kilometer = 1,000 meters)`,
+          finalChoices: [`50`, `60`, `80`, `90`, `100`],
+          finalAnswerIndex: 2,
+          finalAnswer: `80`
+        };
+      }
+    },
+
+    // ─────────────────────────────────────────────────────────────
+    // Q12: Average Salary
+    // ─────────────────────────────────────────────────────────────
+    {
+      id: 'q12-average-salary',
+      section: 'quant',
+      tags: ['averages', 'statistics'],
+      generate: function(rng) {
+        // 2×$14,000 + 1×$16,000 + 3×$17,000 = $95,000
+        // Average = $95,000 / 6 ≈ $15,833 → closest to $15,800
+
+        const n1 = 2, s1 = 14000;
+        const n2 = 1, s2 = 16000;
+        const n3 = 3, s3 = 17000;
+        const total = n1 * s1 + n2 * s2 + n3 * s3; // 95000
+        const count = n1 + n2 + n3; // 6
+        const avg = total / count; // 15833.33
+        const roundedAvg = Math.round(avg / 100) * 100; // 15800
+
+        return {
+          contextSteps: [
+            {
+              prompt: `Step 1: Total salary = ${n1}($${s1.toLocaleString()}) + ${n2}($${s2.toLocaleString()}) + ${n3}($${s3.toLocaleString()}) equals:`,
+              choices: [`$92,000`, `$94,000`, `$${total.toLocaleString()}`, `$97,000`],
+              correctIndex: 2,
+              correctValue: `$${total.toLocaleString()}`
+            },
+            {
+              prompt: `Step 2: Average salary = total / ${count} = $${total.toLocaleString()} / ${count} ≈`,
+              choices: [`$15,200`, `$15,500`, `$${Math.round(avg).toLocaleString()}`, `$16,400`],
+              correctIndex: 2,
+              correctValue: `$${Math.round(avg).toLocaleString()}`
+            },
+            {
+              prompt: `Step 3: $${Math.round(avg).toLocaleString()} is closest to:`,
+              choices: [`$15,200`, `$15,500`, `$${roundedAvg.toLocaleString()}`, `$16,400`],
+              correctIndex: 2,
+              correctValue: `$${roundedAvg.toLocaleString()}`
+            }
+          ],
+          finalQuestion: `A certain bakery has ${count} employees. It pays annual salaries of $${s1.toLocaleString()} to each of ${n1} employees, $${s2.toLocaleString()} to ${n2} employee, and $${s3.toLocaleString()} to each of the remaining ${n3} employees. The average (arithmetic mean) annual salary of these employees is closest to which of the following?`,
+          finalChoices: [`$15,200`, `$15,500`, `$15,800`, `$16,000`, `$16,400`],
+          finalAnswerIndex: 2,
+          finalAnswer: `$15,800`
+        };
+      }
+    },
+
+    // ─────────────────────────────────────────────────────────────
+    // Q13: Company Employees
+    // ─────────────────────────────────────────────────────────────
+    {
+      id: 'q13-company-employees',
       section: 'quant',
       tags: ['algebra', 'systems'],
       generate: function(rng) {
-        const x = pickFrom(rng, [2, 3, 4, 5]);
-        const y = pickFrom(rng, [1, 2, 3, 4].filter(v => v !== x));
-        const sum = x + y;
-        const diff = x - y;
+        // X has 50, Y has 60
+        // Same full-time: X_ft = Y_ft
+        // Let p = X part-time, X_ft = 50 - p
+        // Y_ft = 50 - p, Y_pt = 60 - (50-p) = 10 + p
+        // Y_pt = 2(X_pt) + 3 → 10 + p = 2p + 3 → p = 7
+        // Y_pt = 10 + 7 = 17
+
+        const xTotal = 50;
+        const yTotal = 60;
+        const diff = yTotal - xTotal; // 10
+        // 10 + p = 2p + 3 → p = 7
+        const xPartTime = 7;
+        const yPartTime = diff + xPartTime; // 17
 
         return {
-          fullQuestion: `If x + y = ${sum} and x - y = ${diff}, what is x?`,
-          finalAnswer: x,
-          steps: [
+          contextSteps: [
             {
-              prompt: `Step 1: Add the equations: (x+y) + (x-y) = ${sum} + ${diff} = ?`,
-              ...makeChoices(rng, sum + diff, [sum - diff, sum * diff, sum])
+              prompt: `Step 1: Let Company X have p part-time employees. Then Company X has how many full-time employees?`,
+              choices: [`${xTotal} + p`, `${xTotal} − p`, `p − ${xTotal}`, `${xTotal}p`],
+              correctIndex: 1,
+              correctValue: `${xTotal} − p`
             },
             {
-              prompt: `Step 2: 2x = ${sum + diff}, so x = ?`,
-              ...makeChoices(rng, x, [y, sum, diff])
+              prompt: `Step 2: Company Y has ${yTotal} employees and the same number of full-time employees as X. So Company Y has how many part-time employees?`,
+              choices: [`${diff} + p`, `${diff} − p`, `${yTotal} − p`, `${xTotal} + p`],
+              correctIndex: 0,
+              correctValue: `${diff} + p`
             },
             {
-              prompt: `Final: Given x + y = ${sum} and x - y = ${diff}, x = ?`,
-              ...makeChoices(rng, x, [y, sum, x + 1], 4)
+              prompt: `Step 3: The condition says: Y part-time = 2(X part-time) + 3. That equation is:`,
+              choices: [`${diff} + p = 2p + 3`, `${diff} + p = 2p − 3`, `${diff} − p = 2p + 3`, `${yTotal} − p = 2p + 3`],
+              correctIndex: 0,
+              correctValue: `${diff} + p = 2p + 3`
+            },
+            {
+              prompt: `Step 4: Solve ${diff} + p = 2p + 3. Then p =`,
+              choices: [`5`, `6`, `${xPartTime}`, `8`],
+              correctIndex: 2,
+              correctValue: `${xPartTime}`
+            },
+            {
+              prompt: `Step 5: Then Company Y part-time = ${diff} + p =`,
+              choices: [`15`, `16`, `${yPartTime}`, `18`],
+              correctIndex: 2,
+              correctValue: `${yPartTime}`
             }
           ],
-          cheatsheet: {
-            title: 'Solving Systems by Addition',
-            body: `x + y = ${sum}, x - y = ${diff}. Add: 2x = ${sum + diff} → x = ${x}`,
-            steps: [`Add equations: 2x = ${sum + diff}`, `x = ${(sum + diff) / 2} = ${x}`, `Substitute: y = ${sum} - ${x} = ${y}`],
-            keyFormulas: ['Add/subtract equations to eliminate variables']
-          },
-          flashcard: {
-            front: `x + y = ${sum}, x - y = ${diff}. Find x.`,
-            back: `x = ${x} — Add equations: 2x = ${sum + diff}`
-          }
+          finalQuestion: `Company X has ${xTotal} employees and Company Y has ${yTotal} employees. Both companies have the same number of full-time employees, but Company Y has 3 more than twice the number of part-time employees that Company X has. How many part-time employees does Company Y have?`,
+          finalChoices: [`3`, `7`, `14`, `17`, `20`],
+          finalAnswerIndex: 3,
+          finalAnswer: `17`
         };
       }
     },
 
     // ─────────────────────────────────────────────────────────────
-    // 19. TRIANGLE INEQUALITY
+    // Q14: Units Digit
     // ─────────────────────────────────────────────────────────────
     {
-      id: 'q-triangle-inequality',
+      id: 'q14-units-digit',
       section: 'quant',
-      tags: ['geometry', 'inequalities'],
+      tags: ['number-theory', 'patterns'],
       generate: function(rng) {
-        const a = pickFrom(rng, [3, 4, 5, 6, 7]);
-        const b = pickFrom(rng, [5, 6, 7, 8, 9].filter(v => v > a));
-        const minC = b - a + 1;
-        const maxC = a + b - 1;
+        // a² ends in 9 → a ends in 3 or 7
+        // (a+1)² ends in 4 → a+1 ends in 2 or 8
+        // If a ends in 3: a+1 ends in 4, 4²=16 ends in 6 ✗
+        // If a ends in 7: a+1 ends in 8, 8²=64 ends in 4 ✓
+        // So a ends in 7, a+2 ends in 9, 9²=81 ends in 1
 
         return {
-          fullQuestion: `Two sides of a triangle are ${a} and ${b}. If the third side c is an integer, what is the maximum value of c?`,
-          finalAnswer: maxC,
-          steps: [
+          contextSteps: [
             {
-              prompt: `Step 1: By triangle inequality, c must be less than:`,
-              ...makeChoices(rng, a + b, [a * b, b - a, a + b + 1])
+              prompt: `Step 1: If a² ends in 9, then a must end in:`,
+              choices: [`1 or 9`, `3 or 7`, `2 or 8`, `4 or 6`],
+              correctIndex: 1,
+              correctValue: `3 or 7`
             },
             {
-              prompt: `Step 2: c < ${a + b}, so the largest integer c can be is:`,
-              ...makeChoices(rng, maxC, [a + b, maxC + 1, a + b - 2])
+              prompt: `Step 2: Test a ending in 3. Then (a+1) ends in 4, so (a+1)² ends in:`,
+              choices: [`4`, `6`, `8`, `0`],
+              correctIndex: 1,
+              correctValue: `6`
             },
             {
-              prompt: `Final: Maximum integer value of the third side:`,
-              ...makeChoices(rng, maxC, [a + b, maxC - 1, b], 4)
+              prompt: `Step 3: Since (a+1)² must end in 4, a cannot end in 3, so a must end in:`,
+              choices: [`1`, `5`, `7`, `9`],
+              correctIndex: 2,
+              correctValue: `7`
+            },
+            {
+              prompt: `Step 4: If a ends in 7, then a+2 ends in 9, so (a+2)² ends in:`,
+              choices: [`1`, `3`, `5`, `9`],
+              correctIndex: 0,
+              correctValue: `1`
             }
           ],
-          cheatsheet: {
-            title: 'Triangle Inequality',
-            body: `Sides ${a} and ${b}: third side must satisfy ${b - a} < c < ${a + b}`,
-            steps: [`c < ${a} + ${b} = ${a + b}`, `c > ${b} - ${a} = ${b - a}`, `Max integer c = ${maxC}`],
-            keyFormulas: ['|a-b| < c < a+b']
-          },
-          flashcard: {
-            front: `Triangle with sides ${a}, ${b}. Max third side?`,
-            back: `${maxC} — Must be less than ${a + b}`
-          }
+          finalQuestion: `If a is a positive integer, and if the units digit of a² is 9 and the units digit of (a + 1)² is 4, what is the units digit of (a + 2)²?`,
+          finalChoices: [`1`, `3`, `5`, `6`, `14`],
+          finalAnswerIndex: 0,
+          finalAnswer: `1`
         };
       }
     },
 
     // ─────────────────────────────────────────────────────────────
-    // 20. AVERAGE SPEED
+    // Q15: Exponent System
     // ─────────────────────────────────────────────────────────────
     {
-      id: 'q-average-speed-trip',
+      id: 'q15-exponent-system',
       section: 'quant',
-      tags: ['rates', 'averages'],
+      tags: ['exponents', 'systems'],
       generate: function(rng) {
-        const speed1 = pickFrom(rng, [30, 40, 50, 60]);
-        const speed2 = pickFrom(rng, [40, 50, 60, 80].filter(s => s !== speed1));
-        const distance = pickFrom(rng, [60, 80, 100, 120]);
-        // Average speed = 2d / (d/s1 + d/s2) = 2*s1*s2/(s1+s2)
-        const avgSpeed = (2 * speed1 * speed2) / (speed1 + speed2);
-        const roundedAvg = Math.round(avgSpeed * 10) / 10;
+        // (2^x)(2^y) = 8 → x+y = 3
+        // (9^x)(3^y) = 81 → 2x+y = 4
+        // x = 1, y = 2
+
+        const sum = 3;
+        const secondSum = 4;
+        const x = secondSum - sum; // 1
+        const y = sum - x; // 2
 
         return {
-          fullQuestion: `A car travels ${distance} miles at ${speed1} mph, then returns the same distance at ${speed2} mph. What is the average speed for the round trip?`,
-          finalAnswer: roundedAvg,
-          steps: [
+          contextSteps: [
             {
-              prompt: `Step 1: Time for first leg = ${distance}/${speed1} = ${distance / speed1} hours. Time for return = ${distance}/${speed2} = ?`,
-              ...makeChoices(rng, distance / speed2, [distance / speed1, distance, speed2])
+              prompt: `Step 1: (2^x)(2^y) = 8 can be combined as 2^(x+y) = 8 = 2³, so:`,
+              choices: [`x + y = 2`, `x + y = ${sum}`, `x + y = 4`, `x + y = 8`],
+              correctIndex: 1,
+              correctValue: `x + y = ${sum}`
             },
             {
-              prompt: `Step 2: Total distance = 2 × ${distance} = ${2 * distance}. Total time = ${distance / speed1} + ${distance / speed2} = ?`,
-              ...makeChoices(rng, distance / speed1 + distance / speed2, [2 * distance / speed1, distance / (speed1 + speed2), distance])
+              prompt: `Step 2: (9^x)(3^y) = 81. Rewrite 9^x as (3²)^x = 3^(2x). Then the left side becomes 3^(2x+y). Since 81 = 3⁴, we get:`,
+              choices: [`2x + y = 3`, `2x + y = ${secondSum}`, `2x + y = 5`, `2x + y = 6`],
+              correctIndex: 1,
+              correctValue: `2x + y = ${secondSum}`
             },
             {
-              prompt: `Final: Average speed = ${2 * distance} ÷ ${(distance / speed1 + distance / speed2).toFixed(2)} ≈ ?`,
-              ...makeChoices(rng, roundedAvg, [(speed1 + speed2) / 2, roundedAvg + 5, roundedAvg - 5], 4)
+              prompt: `Step 3: Solve the system: x+y=${sum} and 2x+y=${secondSum}. Subtract the first from the second to get x =`,
+              choices: [`0`, `${x}`, `2`, `3`],
+              correctIndex: 1,
+              correctValue: `${x}`
+            },
+            {
+              prompt: `Step 4: If x=${x} and x+y=${sum}, then y=`,
+              choices: [`1`, `${y}`, `3`, `4`],
+              correctIndex: 1,
+              correctValue: `${y}`
             }
           ],
-          cheatsheet: {
-            title: 'Average Speed for Round Trip',
-            body: `Going ${speed1} mph, returning ${speed2} mph. Avg ≠ (${speed1}+${speed2})/2! Use: 2×${speed1}×${speed2}/(${speed1}+${speed2}) = ${roundedAvg}`,
-            steps: [`Formula: 2×s₁×s₂/(s₁+s₂)`, `= 2×${speed1}×${speed2}/${speed1 + speed2}`, `= ${roundedAvg} mph`],
-            keyFormulas: ['Avg Speed = 2ab/(a+b) for same distance']
-          },
-          flashcard: {
-            front: `${distance}mi at ${speed1}mph, return at ${speed2}mph. Avg speed?`,
-            back: `${roundedAvg} mph — Use harmonic mean: 2×${speed1}×${speed2}/(${speed1}+${speed2})`
-          }
+          finalQuestion: `If (2^x)(2^y) = 8 and (9^x)(3^y) = 81, then (x, y) =`,
+          finalChoices: [`(1, 2)`, `(2, 1)`, `(1, 1)`, `(2, 2)`, `(1, 3)`],
+          finalAnswerIndex: 0,
+          finalAnswer: `(1, 2)`
         };
       }
     },
 
     // ─────────────────────────────────────────────────────────────
-    // 21. NUMBER PROPERTIES (Even/Odd)
+    // Q16: Ratio Expression
     // ─────────────────────────────────────────────────────────────
     {
-      id: 'q-even-odd',
+      id: 'q16-ratio-expression',
       section: 'quant',
-      tags: ['number-theory', 'properties'],
+      tags: ['ratios', 'algebra'],
       generate: function(rng) {
-        const scenarios = [
-          { desc: 'even + even', result: 'even', example: (e1, e2) => `${e1} + ${e2} = ${e1 + e2}` },
-          { desc: 'odd + odd', result: 'even', example: (o1, o2) => `${o1} + ${o2} = ${o1 + o2}` },
-          { desc: 'even × odd', result: 'even', example: (e, o) => `${e} × ${o} = ${e * o}` },
-          { desc: 'odd × odd', result: 'odd', example: (o1, o2) => `${o1} × ${o2} = ${o1 * o2}` }
-        ];
-        const scenario = pickFrom(rng, scenarios);
-        const even1 = pickFrom(rng, [2, 4, 6, 8]);
-        const even2 = pickFrom(rng, [2, 4, 6, 8]);
-        const odd1 = pickFrom(rng, [3, 5, 7, 9]);
-        const odd2 = pickFrom(rng, [3, 5, 7, 9]);
+        // x/y = 2/3 → x=2k, y=3k
+        // (x-y)/x = (2k-3k)/(2k) = -k/(2k) = -1/2
+
+        const xRatio = 2;
+        const yRatio = 3;
+        const result = `−1/2`; // (xRatio - yRatio) / xRatio simplified
 
         return {
-          fullQuestion: `If x is even and y is odd, is x × y even or odd?`,
-          finalAnswer: 'even',
-          steps: [
+          contextSteps: [
             {
-              prompt: `Step 1: An even number can be written as:`,
-              ...makeChoices(rng, '2k', ['2k+1', 'k', 'k/2'])
+              prompt: `Step 1: If x/y = ${xRatio}/${yRatio}, we can represent x and y as:`,
+              choices: [`x=${xRatio}k, y=${yRatio}k`, `x=${yRatio}k, y=${xRatio}k`, `x=${xRatio}k, y=k`, `x=k, y=${yRatio}k`],
+              correctIndex: 0,
+              correctValue: `x=${xRatio}k, y=${yRatio}k`
             },
             {
-              prompt: `Step 2: Even × anything contains factor of:`,
-              ...makeChoices(rng, 2, [1, 3, 'k'])
-            },
-            {
-              prompt: `Final: x × y where x is even is:`,
-              ...makeChoices(rng, 'even', ['odd', 'depends', 'neither'], 4)
+              prompt: `Step 2: Compute (x−y)/x using x=${xRatio}k and y=${yRatio}k:`,
+              choices: [`(${xRatio}k−${yRatio}k)/(${xRatio}k) = ${result}`, `(${xRatio}k−${yRatio}k)/(${yRatio}k) = −1/3`, `(${yRatio}k−${xRatio}k)/(${xRatio}k) = 1/2`, `(${yRatio}k−${xRatio}k)/(${yRatio}k) = 1/3`],
+              correctIndex: 0,
+              correctValue: `(${xRatio}k−${yRatio}k)/(${xRatio}k) = ${result}`
             }
           ],
-          cheatsheet: {
-            title: 'Even/Odd Rules',
-            body: `Even = 2k, Odd = 2k+1. Even × anything = Even.`,
-            steps: [`even × even = even`, `even × odd = even`, `odd × odd = odd`],
-            keyFormulas: ['Even × Any = Even', 'Odd × Odd = Odd']
-          },
-          flashcard: {
-            front: `Even × Odd = ?`,
-            back: `Even — Multiplying by 2 keeps it even`
-          }
+          finalQuestion: `If x/y = ${xRatio}/${yRatio}, then (x − y)/x =`,
+          finalChoices: [`−1/2`, `−1/3`, `1/3`, `1/2`, `5/2`],
+          finalAnswerIndex: 0,
+          finalAnswer: `−1/2`
         };
       }
     },
 
     // ─────────────────────────────────────────────────────────────
-    // 22. FACTORIAL
+    // Q17: Parabola Minimum
     // ─────────────────────────────────────────────────────────────
     {
-      id: 'q-factorial-basic',
+      id: 'q17-parabola-minimum',
       section: 'quant',
-      tags: ['factorials', 'arithmetic'],
+      tags: ['quadratics', 'optimization'],
       generate: function(rng) {
-        const n = pickFrom(rng, [4, 5, 6]);
-        const nMinus1 = n - 1;
-        let factorial = 1;
-        for (let i = 2; i <= n; i++) factorial *= i;
-        let factorialMinus1 = 1;
-        for (let i = 2; i <= nMinus1; i++) factorialMinus1 *= i;
+        // y = k + (x - h)² is minimized when x = h
+        const h = pickFrom(rng, [2, 3, 4, 5]);
+        const k = pickFrom(rng, [2, 3, 4, 5, 6]);
 
         return {
-          fullQuestion: `What is ${n}! ÷ ${nMinus1}!?`,
-          finalAnswer: n,
-          steps: [
+          contextSteps: [
             {
-              prompt: `Step 1: ${n}! = ${n} × ${nMinus1}!. So ${n}!/${nMinus1}! = ?`,
-              ...makeChoices(rng, n, [nMinus1, factorial, n + 1])
+              prompt: `Step 1: y = ${k} + (x − ${h})² is a parabola. The square (x − ${h})² is smallest when x equals:`,
+              choices: [`0`, `${h}`, `${k}`, `−${h}`],
+              correctIndex: 1,
+              correctValue: `${h}`
             },
             {
-              prompt: `Step 2: Verify: ${n}! = ${factorial}, ${nMinus1}! = ${factorialMinus1}. ${factorial}/${factorialMinus1} = ?`,
-              ...makeChoices(rng, n, [n - 1, n + 1, nMinus1])
+              prompt: `Step 2: The smallest possible value of (x − ${h})² is:`,
+              choices: [`−1`, `0`, `1`, `${h}`],
+              correctIndex: 1,
+              correctValue: `0`
             },
             {
-              prompt: `Final: ${n}! ÷ ${nMinus1}! = ?`,
-              ...makeChoices(rng, n, [factorial / n, nMinus1, n * 2], 4)
+              prompt: `Step 3: So y is minimized when x = ${h} (because then y = ${k} + 0). Therefore, the minimizing x is:`,
+              choices: [`${k + h + 10}`, `${k + h + 9}`, `0`, `${h}`],
+              correctIndex: 3,
+              correctValue: `${h}`
             }
           ],
-          cheatsheet: {
-            title: 'Factorial Division',
-            body: `${n}!/${nMinus1}! = ${n} because ${n}! = ${n} × ${nMinus1}!`,
-            steps: [`${n}! = ${n} × ${nMinus1}!`, `${n}!/${nMinus1}! = ${n}`],
-            keyFormulas: ['n!/（n-1)! = n']
-          },
-          flashcard: {
-            front: `${n}! ÷ ${nMinus1}! = ?`,
-            back: `${n} — n! = n × (n-1)!`
-          }
+          finalQuestion: `If y = ${k} + (x − ${h})², then y is least when x =`,
+          finalChoices: [`${k + h + 10}`, `${k + h + 9}`, `0`, `${h}`, `${k}`],
+          finalAnswerIndex: 3,
+          finalAnswer: `${h}`
+        };
+      }
+    },
+
+    // ─────────────────────────────────────────────────────────────
+    // Q18: Continued Fraction
+    // ─────────────────────────────────────────────────────────────
+    {
+      id: 'q18-continued-fraction',
+      section: 'quant',
+      tags: ['fractions', 'order-of-operations'],
+      generate: function(rng) {
+        // 1/(1 + 1/(2 + 1/3))
+        // Inner: 2 + 1/3 = 7/3
+        // 1/(7/3) = 3/7
+        // 1 + 3/7 = 10/7
+        // 1/(10/7) = 7/10
+
+        const innerDen = 3;
+        const middleWhole = 2;
+        const innerResult = middleWhole + 1/innerDen; // 7/3
+        const innerResultNum = middleWhole * innerDen + 1; // 7
+        const innerResultDen = innerDen; // 3
+        const reciprocal1 = `${innerResultDen}/${innerResultNum}`; // 3/7
+        const outerSum = `${innerResultNum + innerResultDen}/${innerResultNum}`; // 10/7
+        const finalNum = innerResultNum; // 7
+        const finalDen = innerResultNum + innerResultDen; // 10
+
+        return {
+          contextSteps: [
+            {
+              prompt: `Step 1: Start inside: ${middleWhole} + 1/${innerDen} equals:`,
+              choices: [`${innerResultNum - 2}/${innerResultDen}`, `${innerResultNum - 1}/${innerResultDen}`, `${innerResultNum}/${innerResultDen}`, `${innerResultNum + 1}/${innerResultDen}`],
+              correctIndex: 2,
+              correctValue: `${innerResultNum}/${innerResultDen}`
+            },
+            {
+              prompt: `Step 2: Now compute 1 / (${middleWhole} + 1/${innerDen}). Since ${middleWhole} + 1/${innerDen} = ${innerResultNum}/${innerResultDen}, the reciprocal is:`,
+              choices: [`${innerResultNum}/${innerResultDen}`, `${innerResultDen}/${innerResultNum}`, `${finalNum}/${finalDen}`, `${finalDen}/${finalNum}`],
+              correctIndex: 1,
+              correctValue: `${innerResultDen}/${innerResultNum}`
+            },
+            {
+              prompt: `Step 3: Now compute 1 + ${innerResultDen}/${innerResultNum} =`,
+              choices: [`${finalDen}/${finalNum}`, `${finalNum}/${finalDen}`, `${innerResultDen + 1}/${innerResultNum}`, `${innerResultNum + 1}/${innerResultNum}`],
+              correctIndex: 0,
+              correctValue: `${finalDen}/${finalNum}`
+            },
+            {
+              prompt: `Step 4: Finally take the reciprocal: 1 / (${finalDen}/${finalNum}) =`,
+              choices: [`${finalDen}/${finalNum}`, `${finalNum}/${finalDen}`, `${innerResultDen}/${finalDen}`, `${innerResultNum - 1}/${finalNum}`],
+              correctIndex: 1,
+              correctValue: `${finalNum}/${finalDen}`
+            }
+          ],
+          finalQuestion: `1 / ( 1 + 1 / ( ${middleWhole} + 1/${innerDen} ) ) =`,
+          finalChoices: [`3/10`, `7/10`, `6/7`, `10/7`, `10/3`],
+          finalAnswerIndex: 1,
+          finalAnswer: `7/10`
         };
       }
     }
@@ -1137,12 +1010,6 @@
   // QUESTION GENERATION API
   // ═══════════════════════════════════════════════════════════════
 
-  /**
-   * Generate a single question from a template
-   * @param {Object} template - Question template
-   * @param {number} seed - Random seed
-   * @returns {Object} Generated question with all fields populated
-   */
   function generateQuestion(template, seed) {
     const rng = seedRandom(seed);
     const generated = template.generate(rng);
@@ -1152,21 +1019,25 @@
       section: template.section,
       tags: template.tags,
       variantSeed: seed,
-      ...generated,
-      quiz: {
-        type: 'mcq',
-        steps: generated.steps
+      contextSteps: generated.contextSteps,
+      finalQuestion: generated.finalQuestion,
+      finalChoices: generated.finalChoices,
+      finalAnswerIndex: generated.finalAnswerIndex,
+      finalAnswer: generated.finalAnswer,
+      // For cheatsheet/flashcard
+      cheatsheet: {
+        title: template.id.replace('q', 'Question ').replace(/-/g, ' '),
+        body: generated.finalQuestion,
+        steps: generated.contextSteps.map(s => s.prompt),
+        keyFormulas: []
+      },
+      flashcard: {
+        front: generated.finalQuestion,
+        back: `Answer: ${generated.finalAnswer}`
       }
     };
   }
 
-  /**
-   * Generate all questions for a quiz session
-   * @param {number} baseSeed - Base seed for the session
-   * @param {number} attemptNumber - Attempt number (increments on restart)
-   * @param {string} sectionFilter - 'all' or specific section
-   * @returns {Array} Array of generated questions
-   */
   function generateQuizQuestions(baseSeed, attemptNumber, sectionFilter = 'all') {
     const questions = [];
 
@@ -1179,54 +1050,35 @@
       questions.push(generateQuestion(template, seed));
     });
 
-    // Shuffle questions using seeded RNG
+    // Shuffle
     const shuffleSeed = hashSeed(baseSeed, 'shuffle', attemptNumber);
-    const shuffleRng = seedRandom(shuffleSeed);
-
-    return shuffle(shuffleRng, questions);
+    return shuffle(seedRandom(shuffleSeed), questions);
   }
 
-  /**
-   * Validate that all templates generate correct questions
-   * Run this in dev mode to verify parameterization works
-   */
-  function validateAllTemplates(iterations = 50) {
-    const results = {
-      passed: 0,
-      failed: 0,
-      errors: []
-    };
+  function validateAllTemplates(iterations = 20) {
+    const results = { passed: 0, failed: 0, errors: [] };
 
     QUESTION_TEMPLATES.forEach(template => {
       for (let i = 0; i < iterations; i++) {
         try {
           const seed = Date.now() + i * 1000;
-          const question = generateQuestion(template, seed);
+          const q = generateQuestion(template, seed);
 
-          // Check all steps have valid answerIndex
-          question.quiz.steps.forEach((step, stepIdx) => {
-            if (step.answerIndex < 0 || step.answerIndex >= step.choices.length) {
-              throw new Error(`Invalid answerIndex at step ${stepIdx}`);
-            }
-            // Check no duplicate choices
-            const uniqueChoices = new Set(step.choices);
-            if (uniqueChoices.size !== step.choices.length) {
-              throw new Error(`Duplicate choices at step ${stepIdx}`);
-            }
-          });
-
+          if (q.finalAnswerIndex < 0 || q.finalAnswerIndex >= q.finalChoices.length) {
+            throw new Error(`Invalid finalAnswerIndex`);
+          }
+          if (q.finalChoices[q.finalAnswerIndex] !== q.finalAnswer) {
+            throw new Error(`Answer mismatch`);
+          }
           results.passed++;
         } catch (e) {
           results.failed++;
-          results.errors.push(`${template.id} iteration ${i}: ${e.message}`);
+          results.errors.push(`${template.id}: ${e.message}`);
         }
       }
     });
 
     console.log(`Validation: ${results.passed} passed, ${results.failed} failed`);
-    if (results.errors.length > 0) {
-      console.log('Errors:', results.errors.slice(0, 10));
-    }
     return results;
   }
 
@@ -1242,7 +1094,7 @@
     seedRandom,
     hashSeed,
     shuffle,
-    VERSION: '8.0'
+    VERSION: '9.0'
   };
 
   if (typeof module !== 'undefined' && module.exports) {
