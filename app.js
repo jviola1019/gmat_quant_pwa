@@ -1,6 +1,6 @@
 /**
  * GMAT Study PWA - Main Application
- * Version 8.0 - Fully Parameterized Quiz System
+ * Version 9.0 - Context Steps + Final Question Quiz System
  *
  * DEVELOPER NOTES:
  * ================
@@ -8,14 +8,18 @@
  * QUIZ STATE MANAGEMENT:
  * - state.quiz.queue: Array of generated questions (from QuestionTemplates)
  * - state.quiz.qIndex: Current question index
- * - state.quiz.sIndex: Current step index within question
  * - state.quiz.attempts: Wrong attempts on CURRENT QUESTION (0, 1, or 2)
- * - state.quiz.score: Number of questions answered correctly (all steps)
+ * - state.quiz.score: Number of questions answered correctly
+ *
+ * QUIZ FLOW:
+ * - Each question shows contextSteps as read-only reasoning context
+ * - User ONLY answers the finalQuestion (not intermediate steps)
+ * - Steps are displayed above the final question for guidance
  *
  * ATTEMPT LOGIC (STRICT):
  * - 1st wrong answer: Show "Incorrect", NO hint, allow retry
- * - 2nd wrong answer: IMMEDIATE quiz restart
- * - Correct answer: Move to next step (or next question if last step)
+ * - 2nd wrong answer: IMMEDIATE quiz restart with new parameters
+ * - Correct answer: Move to next question
  *
  * RESTART TRIGGERS:
  * - User gets 2 wrong attempts on any question
@@ -25,7 +29,7 @@
  * PARAMETERIZED QUESTIONS:
  * - All questions generated from templates in questionTemplates.js
  * - Numbers regenerate on each attempt/restart
- * - Seeded RNG ensures reproducibility in dev mode
+ * - Seeded RNG ensures reproducibility
  *
  * FLASHCARD SINGLE-CARD ENFORCEMENT:
  * - DOM is cleared and rebuilt on each navigation
@@ -48,7 +52,6 @@
       started: false,   // Past START screen
       queue: [],        // Generated questions for this session
       qIndex: 0,        // Current question index
-      sIndex: 0,        // Current step index
       attempts: 0,      // Wrong attempts on current question (resets per question)
       score: 0,         // Questions answered correctly
       selectedAnswer: null,
@@ -168,7 +171,7 @@
         } else if (e.key >= '1' && e.key <= '5') {
           const idx = parseInt(e.key) - 1;
           const qItem = state.quiz.queue[state.quiz.qIndex];
-          if (qItem && qItem.quiz.steps[state.quiz.sIndex].choices[idx]) {
+          if (qItem && qItem.finalChoices && qItem.finalChoices[idx]) {
             selectAnswer(idx);
           }
         }
@@ -478,15 +481,15 @@
       <div class="quiz-rules">
         <div class="rule-item">
           <span class="rule-icon">1</span>
-          <span class="rule-text">Answer each step to progress</span>
+          <span class="rule-text">Read the reasoning steps, then answer the final question</span>
         </div>
         <div class="rule-item">
           <span class="rule-icon">2</span>
-          <span class="rule-text">First wrong: marked incorrect, retry</span>
+          <span class="rule-text">First wrong: marked incorrect, try again</span>
         </div>
         <div class="rule-item">
           <span class="rule-icon">3</span>
-          <span class="rule-text">Second wrong: quiz restarts</span>
+          <span class="rule-text">Second wrong: quiz restarts with new numbers</span>
         </div>
       </div>
     `;
@@ -550,35 +553,42 @@
 
   // ═══════════════════════════════════════════════════════════════
   // QUIZ QUESTION RENDERING
-  // Single question visible at a time
+  // Shows context steps + final question (user only answers final)
   // ═══════════════════════════════════════════════════════════════
 
   function renderQuizQuestion() {
     const qItem = state.quiz.queue[state.quiz.qIndex];
-    if (!qItem || !qItem.quiz || !qItem.quiz.steps) {
+    if (!qItem || !qItem.finalQuestion) {
       renderQuizComplete();
       return;
     }
 
-    const step = qItem.quiz.steps[state.quiz.sIndex];
-    if (!step) {
-      // Move to next question
-      state.quiz.qIndex++;
-      state.quiz.sIndex = 0;
-      state.quiz.attempts = 0;
-      render();
-      return;
-    }
-
-    const totalSteps = qItem.quiz.steps.length;
     const totalQuestions = state.quiz.queue.length;
-    const progressPct = ((state.quiz.qIndex + (state.quiz.sIndex / totalSteps)) / totalQuestions) * 100;
+    const progressPct = ((state.quiz.qIndex + 1) / totalQuestions) * 100;
 
     const container = document.createElement('div');
     container.className = 'quiz-question-view';
 
-    // Build choices HTML
-    const choicesHtml = step.choices.map((choice, idx) => `
+    // Build context steps HTML (read-only, for guidance)
+    let contextStepsHtml = '';
+    if (qItem.contextSteps && qItem.contextSteps.length > 0) {
+      contextStepsHtml = `
+        <div class="quiz-context-steps">
+          <div class="context-steps-header">Reasoning Steps (for guidance):</div>
+          <ol class="context-steps-list">
+            ${qItem.contextSteps.map((step, idx) => `
+              <li class="context-step-item">
+                <span class="step-text">${step.prompt}</span>
+                <span class="step-answer">→ ${step.correctValue}</span>
+              </li>
+            `).join('')}
+          </ol>
+        </div>
+      `;
+    }
+
+    // Build choices HTML for final question
+    const choicesHtml = qItem.finalChoices.map((choice, idx) => `
       <button class="quiz-choice-btn ${state.quiz.selectedAnswer === idx ? 'selected' : ''}" data-index="${idx}">
         <span class="choice-letter">${String.fromCharCode(65 + idx)}</span>
         <span class="choice-text">${choice}</span>
@@ -592,23 +602,20 @@
         </div>
         <div class="quiz-meta">
           <span>Question ${state.quiz.qIndex + 1} of ${totalQuestions}</span>
-          <span>Step ${state.quiz.sIndex + 1} of ${totalSteps}</span>
         </div>
       </div>
 
       <div class="quiz-card">
-        <div class="quiz-step-indicator">
-          ${Array.from({ length: totalSteps }, (_, i) => `
-            <div class="step-dot ${i < state.quiz.sIndex ? 'completed' : i === state.quiz.sIndex ? 'active' : ''}">
-              ${i < state.quiz.sIndex ? '&#x2713;' : i + 1}
-            </div>
-          `).join('')}
-        </div>
+        <div class="quiz-final-question-header">Final Question:</div>
+        <div class="quiz-question-text quiz-final-question">${qItem.finalQuestion}</div>
 
-        <div class="quiz-question-text">${step.prompt}</div>
+        ${contextStepsHtml}
 
-        <div class="quiz-choices" id="quiz-choices">
-          ${choicesHtml}
+        <div class="quiz-answer-section">
+          <div class="answer-section-header">Your Answer:</div>
+          <div class="quiz-choices" id="quiz-choices">
+            ${choicesHtml}
+          </div>
         </div>
 
         <div class="quiz-strike-indicator">
@@ -665,8 +672,7 @@
 
   function checkAnswer() {
     const qItem = state.quiz.queue[state.quiz.qIndex];
-    const step = qItem.quiz.steps[state.quiz.sIndex];
-    const isCorrect = state.quiz.selectedAnswer === step.answerIndex;
+    const isCorrect = state.quiz.selectedAnswer === qItem.finalAnswerIndex;
 
     const feedback = document.getElementById('quiz-feedback');
     const choicesContainer = document.getElementById('quiz-choices');
@@ -675,7 +681,7 @@
     choicesContainer.querySelectorAll('.quiz-choice-btn').forEach(btn => {
       btn.disabled = true;
       const idx = parseInt(btn.dataset.index);
-      if (idx === step.answerIndex) {
+      if (idx === qItem.finalAnswerIndex) {
         btn.classList.add('correct');
       } else if (idx === state.quiz.selectedAnswer && !isCorrect) {
         btn.classList.add('wrong');
@@ -691,18 +697,11 @@
       document.getElementById('quiz-submit').disabled = true;
 
       setTimeout(() => {
-        // Move to next step or question
-        state.quiz.sIndex++;
+        // Move to next question
+        state.quiz.score++;
+        state.quiz.qIndex++;
         state.quiz.selectedAnswer = null;
-        state.quiz.attempts = 0; // Reset attempts for new question/step
-
-        if (state.quiz.sIndex >= qItem.quiz.steps.length) {
-          // Completed all steps for this question
-          state.quiz.score++;
-          state.quiz.qIndex++;
-          state.quiz.sIndex = 0;
-        }
-
+        state.quiz.attempts = 0;
         render();
       }, 800);
     } else {
@@ -715,7 +714,7 @@
         feedback.innerHTML = `
           <span class="feedback-icon">&#x2717;</span>
           <span>Two incorrect attempts — restarting quiz.</span>
-          <span class="feedback-answer">Correct answer: <strong>${step.choices[step.answerIndex]}</strong></span>
+          <span class="feedback-answer">Correct answer: <strong>${qItem.finalAnswer}</strong></span>
         `;
         feedback.style.display = 'block';
 
@@ -727,7 +726,6 @@
           state.quiz.active = false;
           state.quiz.started = true;
           state.quiz.qIndex = 0;
-          state.quiz.sIndex = 0;
           state.quiz.score = 0;
           state.quiz.attempts = 0;
           state.quiz.selectedAnswer = null;
@@ -833,7 +831,6 @@
 
     state.quiz.queue = questions;
     state.quiz.qIndex = 0;
-    state.quiz.sIndex = 0;
     state.quiz.score = 0;
     state.quiz.attempts = 0;
     state.quiz.selectedAnswer = null;
@@ -845,7 +842,6 @@
     state.quiz.active = false;
     state.quiz.started = false;
     state.quiz.qIndex = 0;
-    state.quiz.sIndex = 0;
     state.quiz.score = 0;
     state.quiz.attempts = 0;
     state.quiz.selectedAnswer = null;

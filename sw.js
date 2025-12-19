@@ -1,9 +1,9 @@
 /**
  * GMAT Study PWA - Service Worker
- * Version 8.0 - Parameterized Questions
+ * Version 9.0 - Context Steps + Final Question Quiz
  */
 
-const CACHE_NAME = 'gmat-v9';
+const CACHE_NAME = 'gmat-v10';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

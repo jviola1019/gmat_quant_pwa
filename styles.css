@@ -1,6 +1,6 @@
 /**
  * GMAT Study PWA - Styles
- * Version 7.0 - Quiz Hints & Enhanced Cheatsheet
+ * Version 9.0 - Context Steps + Final Question Quiz System
  * Material Design 3 inspired with modern enhancements
  */
 
@@ -1056,6 +1056,107 @@ body {
   color: var(--md-on-surface);
   margin-bottom: 24px;
   text-align: left;
+}
+
+/* Final Question Header & Styling */
+.quiz-final-question-header {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  color: var(--md-primary);
+  margin-bottom: 12px;
+}
+
+.quiz-final-question {
+  font-size: 18px;
+  font-weight: 500;
+  padding: 20px;
+  background: rgba(168, 199, 250, 0.08);
+  border-left: 4px solid var(--md-primary);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  margin-bottom: 24px;
+}
+
+/* Context Steps - Read-only reasoning guidance */
+.quiz-context-steps {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--md-outline-variant);
+}
+
+.context-steps-header {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  color: var(--md-tertiary);
+  margin-bottom: 12px;
+}
+
+.context-steps-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  counter-reset: context-step;
+}
+
+.context-step-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--md-outline-variant);
+}
+
+.context-step-item::before {
+  content: counter(context-step);
+  counter-increment: context-step;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-xs);
+  background: var(--md-surface-container-high);
+  color: var(--md-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.step-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--md-on-surface-variant);
+}
+
+.step-answer {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--md-success);
+  padding-left: 4px;
+}
+
+/* Answer Section Header */
+.quiz-answer-section {
+  margin-bottom: 16px;
+}
+
+.answer-section-header {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  color: var(--md-primary);
+  margin-bottom: 12px;
 }
 
 /* Multiple Choice Options */
